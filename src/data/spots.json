@@ -1,0 +1,37 @@
+[
+  {
+    "id": "food-yakisoba",
+    "name": "鉄板やきそば研究会",
+    "category": "フード",
+    "location": "中庭フードエリア A-3",
+    "vibe": "香ばしい音と活気で自然に会話が弾む"
+  },
+  {
+    "id": "exhibit-mystery",
+    "name": "没入型ミステリー展示",
+    "category": "展示",
+    "location": "本館 3階 305教室",
+    "vibe": "静かにワクワクしながら未知を発見できる"
+  },
+  {
+    "id": "stage-acoustic",
+    "name": "アコースティックステージ",
+    "category": "ステージ",
+    "location": "体育館メインステージ",
+    "vibe": "音楽を囲んで気分を一気に高められる"
+  },
+  {
+    "id": "cafe-retro",
+    "name": "喫茶レトロ日和",
+    "category": "カフェ",
+    "location": "新館 2階 204教室",
+    "vibe": "落ち着いた空間でひと息つき、予定を立て直せる"
+  },
+  {
+    "id": "workshop-keychain",
+    "name": "きらめきキーホルダー工房",
+    "category": "ワークショップ",
+    "location": "図書館前テント B-2",
+    "vibe": "手を動かして、その日の思い出を形にできる"
+  }
+]
