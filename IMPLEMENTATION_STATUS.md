@@ -11,7 +11,7 @@
 | 追加体験 | お守りカードの文言・色、音声読み上げ、会話、複数回の結果のまとめ |
 | データ | `src/data/spots.json` に 5 件のスポットを固定登録 |
 | 保存 | 運勢名とメッセージをブラウザーの localStorage に最大 10 件保存。サーバー側の DB やユーザー認証はなし |
-| 配布状況 | `huhefu/gemini-gakusai` を作成し、[本番 URL](https://gemini-gakusai.vercel.app/) にデプロイ済み。トップページは HTTP 200。`GEMINI_API_KEY` が未設定のため、おみくじ生成 API は HTTP 500 |
+| 配布状況 | `huhefu/gemini-gakusai` を作成し、[本番 URL](https://gemini-gakusai.vercel.app/) にデプロイ済み。Production に `GEMINI_API_KEY` を設定し、主要 API の成功応答を確認済み |
 
 ## 確認結果
 
@@ -19,8 +19,9 @@
 - `npm run lint`：初回は終了コード 0、設定ファイルの警告が 2 件。ビルド後は生成された `.next` まで検査して失敗したため、生成物を除外する設定と警告箇所を修正した。
 - `npm run build`：成功。トップページと 7 つの API ルートを生成。
 - `npm audit`：2 件（moderate 1、high 1）。Next.js が参照する PostCSS の脆弱性。Next.js のメジャー更新が修正候補として提示されるため、互換性確認を伴う更新が必要。
-- 実 API 呼び出し：未検証。この作業環境に `GEMINI_API_KEY` がないため、Gemini 応答、写真判定、音声生成の動作は確認できていない。
-- Vercel：CLI で `huhefu/gemini-gakusai` を作成。最初のデプロイは Framework Preset が `Other` となり 404 だったため、`Next.js` に変更して再デプロイした。公開 URL は HTTP 200。AI の動作には本番環境変数の追加と再デプロイが必要。
+- 本番 API：おみくじ、カード、なぞなぞ、会話、まとめ、音声、写真判定の 7 ルートが HTTP 200 を返すことを確認。写真判定は同梱画像を使った疎通確認で、実際の来場者写真による判定品質は未評価。
+- Vercel：CLI で `huhefu/gemini-gakusai` を作成。最初のデプロイは Framework Preset が `Other` となり 404 だったため、`Next.js` に変更して再デプロイした。GitHub リポジトリを接続済み。
+- Gemini：当初 `gemini-3.6-flash` が `503 UNAVAILABLE` を返したため、一時的な 503 の際は短く待って `gemini-3.5-flash` に切り替える処理を追加。修正後に本番のおみくじ生成が成功した。
 
 ## 公開前に解消したい点
 
