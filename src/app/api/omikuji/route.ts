@@ -1,6 +1,6 @@
 import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
-import { getGenAI } from "@/lib/gemini";
+import { generateContentWithFallback, getGenAI } from "@/lib/gemini";
 import spots from "@/data/spots.json";
 
 type OmikujiRequest = {
@@ -116,7 +116,7 @@ ${spotContext}
 上のスポットから最適な1件を mission.target_spot に選び、楽しいミッションを作成してください。mission.riddle には運勢やミッションに関連した簡単ななぞなぞ（一言で答えられるもの）を、mission.riddle_answer にはその想定解答を入れてください。lucky_elements.spot も上記スポット名から選んでください。responseSchema に完全準拠する JSON のみを返してください。`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithFallback(ai, {
       model: "gemini-3.6-flash",
       contents: prompt,
       config: {

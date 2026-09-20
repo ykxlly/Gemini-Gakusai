@@ -1,6 +1,6 @@
 import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
-import { getGenAI } from "@/lib/gemini";
+import { generateContentWithFallback, getGenAI } from "@/lib/gemini";
 
 type RiddleRequest = {
   riddle?: unknown;
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 判定は甘めで構いません。不正解でも来場者を励ますような前向きな feedback にしてください。`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithFallback(ai, {
       model: "gemini-3.6-flash",
       contents: prompt,
       config: {

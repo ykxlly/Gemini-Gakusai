@@ -1,6 +1,6 @@
 import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
-import { getGenAI } from "@/lib/gemini";
+import { generateContentWithFallback, getGenAI } from "@/lib/gemini";
 
 type CardRequest = {
   fortuneName?: unknown;
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 phrase には御守りに刻む短く縁起の良い一言を、accent_hex にはラッキーカラーを表すHEXカラーコードを入れてください。`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithFallback(ai, {
       model: "gemini-3.6-flash",
       contents: prompt,
       config: {

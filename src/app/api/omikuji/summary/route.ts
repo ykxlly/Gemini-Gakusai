@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getGenAI } from "@/lib/gemini";
+import { generateContentWithFallback, getGenAI } from "@/lib/gemini";
 
 type SummaryRequest = {
   fortunes?: unknown;
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   const prompt = `来場者が学園祭で今日引いたおみくじの履歴です。\n${history}\n\nこの1日を締めくくる、温かく前向きなまとめコメントを120〜160文字の日本語で書いてください。断定的な性格診断や医療的な内容は禁止です。`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithFallback(ai, {
       model: "gemini-3.6-flash",
       contents: prompt,
     });

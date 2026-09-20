@@ -1,6 +1,6 @@
 import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
-import { getGenAI } from "@/lib/gemini";
+import { generateContentWithFallback, getGenAI } from "@/lib/gemini";
 
 type VerifyRequest = {
   spot?: unknown;
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 これはエンタメ用の軽い判定で、来場者を責めたり否定的に扱ってはいけません。写真がスポット「${body.spot.trim()}」やミッション内容「${body.missionDescription.trim()}」と関連していそうであれば verified を true にしてください。判断が難しい場合は好意的に true 寄りに解釈してください。comment には実況風の短いポジティブなコメントを日本語で書いてください。`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithFallback(ai, {
       model: "gemini-3.6-flash",
       contents: [
         {
