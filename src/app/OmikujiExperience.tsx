@@ -455,7 +455,7 @@ export default function OmikujiExperience() {
               <Image alt="" className="stage-sparkle stage-sparkle-small" height={38} src="/sparkle-clean.png" unoptimized width={38} />
               <span className="mascot-caption" aria-live="polite">{mascotMessage}</span>
             </div>
-            <div className="privacy-note"><Check size={16} /> 入力内容は診断や分析には使用しません</div>
+            <div className="privacy-note"><Check size={16} /> 入力内容は AI おみくじの生成に使用されます</div>
           </section>
 
           <section className="form-panel" aria-labelledby="form-title">
@@ -595,7 +595,7 @@ export default function OmikujiExperience() {
                     <Camera size={14} /> 写真を選ぶ
                     <input accept="image/*" hidden onChange={handlePhotoSelect} type="file" />
                   </label>
-                  <p className="privacy-hint">送信した写真は判定にのみ使用され、保存されません</p>
+                  <p className="privacy-hint">写真は AI に送信して判定します。このアプリには保存しません</p>
                   {photoPreview && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img alt="ミッションの証拠写真プレビュー" className="photo-preview" src={photoPreview} />
