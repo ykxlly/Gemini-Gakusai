@@ -444,8 +444,9 @@ export default function OmikujiExperience() {
       if (!response.ok) throw new Error("お守りカードの生成に失敗しました。");
       const data = (await response.json()) as { phrase: string; accent_hex: string };
       setCard({ phrase: data.phrase, accentHex: data.accent_hex });
-    } catch (cardRequestError) {
-      showToast(cardRequestError instanceof Error ? cardRequestError.message : "通信エラーが発生しました。");
+    } catch {
+      setCard({ phrase: `${result.mission.target_spot}で、今日だけの発見を。`, accentHex: "#d83a2e" });
+      showToast("AIが混み合っているため、お守りカードのひな形を作りました");
     } finally {
       setIsGeneratingCard(false);
     }
@@ -485,8 +486,10 @@ export default function OmikujiExperience() {
       });
       if (!response.ok) throw new Error("答え合わせに失敗しました。");
       setRiddleResult((await response.json()) as { correct: boolean; feedback: string });
-    } catch (riddleRequestError) {
-      showToast(riddleRequestError instanceof Error ? riddleRequestError.message : "通信エラーが発生しました。");
+    } catch {
+      const correct = riddleAnswer.replace(/\s/g, "").includes(result.mission.riddle_answer.replace(/\s/g, ""));
+      setRiddleResult({ correct, feedback: correct ? "いい発見！その調子で会場を巡ってみよう。" : "答えは現地で探してみよう。見つけた瞬間がミッション達成！" });
+      showToast("AIが混み合っているため、やさしい答え合わせに切り替えました");
     } finally {
       setIsCheckingRiddle(false);
     }
@@ -666,8 +669,9 @@ export default function OmikujiExperience() {
       if (!response.ok) throw new Error("返信の取得に失敗しました。");
       const data = (await response.json()) as { reply: string };
       setChatMessages((current) => [...current, { role: "model", text: data.reply }]);
-    } catch (chatRequestError) {
-      showToast(chatRequestError instanceof Error ? chatRequestError.message : "通信エラーが発生しました。");
+    } catch {
+      setChatMessages((current) => [...current, { role: "model", text: `「${result.mission.target_spot}」を目指してみよう！会場案内や企画の詳細は現地表示も確認してね。` }]);
+      showToast("案内モードで返信しました");
     } finally {
       setIsChatting(false);
     }
@@ -685,8 +689,9 @@ export default function OmikujiExperience() {
       if (!response.ok) throw new Error("まとめの生成に失敗しました。");
       const data = (await response.json()) as { summary: string };
       setSummaryText(data.summary);
-    } catch (summaryRequestError) {
-      showToast(summaryRequestError instanceof Error ? summaryRequestError.message : "通信エラーが発生しました。");
+    } catch {
+      setSummaryText(`今日は${history.length}回の寄り道を楽しみました。気になった企画へ向かった一歩が、今日だけの思い出になっています。`);
+      showToast("AIが混み合っているため、今日のまとめを作りました");
     } finally {
       setIsSummarizing(false);
     }

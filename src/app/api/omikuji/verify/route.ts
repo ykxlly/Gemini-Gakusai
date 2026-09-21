@@ -1,6 +1,7 @@
 import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
-import { generateContentWithFallback, getGenAI } from "@/lib/gemini";
+import { generateWithAIFallback, groqImageMessage } from "@/lib/ai-fallback";
+import { getGenAI } from "@/lib/gemini";
 import spots from "@/data/spots.json";
 
 type VerifyRequest = {
@@ -34,10 +35,6 @@ function isText(value: unknown): value is string {
 export async function POST(request: Request) {
   const ai = getGenAI();
 
-  if (!ai) {
-    return NextResponse.json({ error: "GEMINI_API_KEY is not configured." }, { status: 500 });
-  }
-
   let body: VerifyRequest;
 
   try {
@@ -65,7 +62,11 @@ rally_completeはお題と少しでも関連していればtrueにしてくだ�
 next_spotは、上記の企画とは異なる公式掲載企画から選び、写真の雰囲気に合う次の寄り道を提案してください。responseSchemaに完全準拠したJSONのみを返してください。`;
 
   try {
-    const response = await generateContentWithFallback(ai, {
+    const response = await generateWithAIFallback({
+      gemini: ai,
+      groqMessages: [groqImageMessage(`${prompt}\nJSONだけを返してください。`, body.imageBase64.trim(), body.mimeType.trim())],
+      json: true,
+      geminiRequest: {
       model: "gemini-3.6-flash",
       contents: [
         {
@@ -77,11 +78,8 @@ next_spotは、上記の企画とは異なる公式掲載企画から選び、�
         responseMimeType: "application/json",
         responseSchema,
       },
+      },
     });
-
-    if (!response.text) {
-      throw new Error("Gemini returned an empty response.");
-    }
 
     return NextResponse.json(JSON.parse(response.text));
   } catch (error) {

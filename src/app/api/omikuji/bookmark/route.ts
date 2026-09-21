@@ -1,6 +1,7 @@
 import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
-import { generateContentWithFallback, getGenAI } from "@/lib/gemini";
+import { generateWithAIFallback } from "@/lib/ai-fallback";
+import { getGenAI } from "@/lib/gemini";
 
 type Memory = { caption: string; spot: string; area: string };
 type BookmarkRequest = { fortuneName?: unknown; memories?: unknown };
@@ -22,7 +23,6 @@ function isValidMemories(value: unknown): value is Memory[] {
 
 export async function POST(request: Request) {
   const ai = getGenAI();
-  if (!ai) return NextResponse.json({ error: "GEMINI_API_KEY is not configured." }, { status: 500 });
 
   let body: BookmarkRequest;
   try {
@@ -44,12 +44,16 @@ ${memoryText}
 titleにはしおりのタイトル、closing_commentには思い出を優しく結ぶ日本語の一言を書いてください。心理診断や断定はしないでください。`;
 
   try {
-    const response = await generateContentWithFallback(ai, {
+    const response = await generateWithAIFallback({
+      gemini: ai,
+      groqMessages: [{ role: "user", content: `${prompt}\nJSONだけを返してください。` }],
+      json: true,
+      geminiRequest: {
       model: "gemini-3.6-flash",
       contents: prompt,
       config: { responseMimeType: "application/json", responseSchema },
+      },
     });
-    if (!response.text) throw new Error("Gemini returned an empty response.");
     return NextResponse.json(JSON.parse(response.text));
   } catch (error) {
     console.error("Failed to create memory bookmark:", error);

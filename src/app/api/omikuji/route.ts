@@ -1,6 +1,7 @@
 import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
-import { generateContentWithFallback, getGenAI } from "@/lib/gemini";
+import { generateWithAIFallback } from "@/lib/ai-fallback";
+import { getGenAI } from "@/lib/gemini";
 import spots from "@/data/spots.json";
 
 type OmikujiRequest = {
@@ -64,10 +65,6 @@ function isText(value: unknown): value is string {
 export async function POST(request: Request) {
   const ai = getGenAI();
 
-  if (!ai) {
-    return NextResponse.json({ error: "GEMINI_API_KEY is not configured." }, { status: 500 });
-  }
-
   let body: OmikujiRequest;
 
   try {
@@ -122,18 +119,19 @@ ${spotContext}
 lucky_elements.spot も上記企画名から選んでください。responseSchema に完全準拠する JSON のみを返してください。`;
 
   try {
-    const response = await generateContentWithFallback(ai, {
+    const response = await generateWithAIFallback({
+      gemini: ai,
+      groqMessages: [{ role: "user", content: `${prompt}\nJSONだけを返してください。` }],
+      json: true,
+      geminiRequest: {
       model: "gemini-3.6-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
         responseSchema,
       },
+      },
     });
-
-    if (!response.text) {
-      throw new Error("Gemini returned an empty response.");
-    }
 
     return NextResponse.json(JSON.parse(response.text));
   } catch (error) {

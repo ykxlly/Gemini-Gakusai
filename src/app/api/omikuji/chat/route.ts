@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { generateWithAIFallback } from "@/lib/ai-fallback";
 import { getGenAI } from "@/lib/gemini";
 
 type ChatTurn = { role: "user" | "model"; text: string };
@@ -30,10 +31,6 @@ function isValidHistory(value: unknown): value is ChatTurn[] {
 export async function POST(request: Request) {
   const ai = getGenAI();
 
-  if (!ai) {
-    return NextResponse.json({ error: "GEMINI_API_KEY is not configured." }, { status: 500 });
-  }
-
   let body: ChatRequest;
 
   try {
@@ -48,24 +45,29 @@ export async function POST(request: Request) {
 
   const history = (body.history as ChatTurn[] | undefined) ?? [];
 
+  const systemInstruction = `あなたは学園祭「超パーソナルAIおみくじ」の案内キャラクターです。来場者が引いた運勢「${
+    isText(body.fortuneName) ? body.fortuneName.trim() : "不明"
+  }」とミッション「${
+    isText(body.missionTitle) ? body.missionTitle.trim() : "不明"
+  }」を踏まえて、明るく親しみやすい口調で短く(80文字以内)答えてください。医療・断定的な心理診断・不適切な内容は禁止です。`;
+
   try {
-    const chat = ai.chats.create({
-      model: "gemini-3.6-flash",
-      config: {
-        systemInstruction: `あなたは学園祭「超パーソナルAIおみくじ」の案内キャラクターです。来場者が引いた運勢「${
-          isText(body.fortuneName) ? body.fortuneName.trim() : "不明"
-        }」とミッション「${
-          isText(body.missionTitle) ? body.missionTitle.trim() : "不明"
-        }」を踏まえて、明るく親しみやすい口調で短く(80文字以内)答えてください。医療・断定的な心理診断・不適切な内容は禁止です。`,
+    const response = await generateWithAIFallback({
+      gemini: ai,
+      geminiRequest: {
+        model: "gemini-3.6-flash",
+        config: { systemInstruction },
+        contents: [
+          ...history.map((turn) => ({ role: turn.role, parts: [{ text: turn.text }] })),
+          { role: "user", parts: [{ text: body.message.trim() }] },
+        ],
       },
-      history: history.map((turn) => ({ role: turn.role, parts: [{ text: turn.text }] })),
+      groqMessages: [
+        { role: "system", content: systemInstruction },
+        ...history.map((turn) => ({ role: turn.role === "model" ? "assistant" as const : "user" as const, content: turn.text })),
+        { role: "user", content: body.message.trim() },
+      ],
     });
-
-    const response = await chat.sendMessage({ message: body.message.trim() });
-
-    if (!response.text) {
-      throw new Error("Gemini returned an empty response.");
-    }
 
     return NextResponse.json({ reply: response.text });
   } catch (error) {

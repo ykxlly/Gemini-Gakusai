@@ -1,6 +1,7 @@
 import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
-import { generateContentWithFallback, getGenAI } from "@/lib/gemini";
+import { generateWithAIFallback } from "@/lib/ai-fallback";
+import { getGenAI } from "@/lib/gemini";
 
 type CardRequest = {
   fortuneName?: unknown;
@@ -24,10 +25,6 @@ function isText(value: unknown): value is string {
 export async function POST(request: Request) {
   const ai = getGenAI();
 
-  if (!ai) {
-    return NextResponse.json({ error: "GEMINI_API_KEY is not configured." }, { status: 500 });
-  }
-
   let body: CardRequest;
 
   try {
@@ -47,18 +44,19 @@ export async function POST(request: Request) {
 phrase には御守りに刻む短く縁起の良い一言を、accent_hex にはラッキーカラーを表すHEXカラーコードを入れてください。`;
 
   try {
-    const response = await generateContentWithFallback(ai, {
+    const response = await generateWithAIFallback({
+      gemini: ai,
+      groqMessages: [{ role: "user", content: `${prompt}\nJSONだけを返してください。` }],
+      json: true,
+      geminiRequest: {
       model: "gemini-3.6-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
         responseSchema,
       },
+      },
     });
-
-    if (!response.text) {
-      throw new Error("Gemini returned an empty response.");
-    }
 
     return NextResponse.json(JSON.parse(response.text));
   } catch (error) {
