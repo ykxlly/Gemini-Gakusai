@@ -492,3 +492,68 @@ footer span { margin: 0 6px; }
     transition-duration: .01ms !important;
   }
 }
+
+/* Festival guide refresh: softer, more human, and less like an AI dashboard. */
+:root {
+  --paper: #fbf7ec;
+  --red: #c94a3a;
+  --yellow: #f3d57a;
+  --green: #3d725f;
+  --line: #ddd5c5;
+}
+body { background: #e9e2d5; font-family: "Noto Sans JP", "Yu Gothic", sans-serif; }
+.app-shell { background-image: none; box-shadow: 0 12px 40px rgba(69, 52, 34, .12); }
+.site-header { height: 76px; }
+.brand { gap: 9px; color: #5d564b; }
+.brand strong { color: var(--ink); font-size: 18px; }
+.festival-tag { border-color: var(--line); border-radius: 999px; background: rgba(255,255,255,.62); color: #6e675c; }
+.intro-panel { padding-top: 38px; }
+.intro-panel h1 { max-width: 410px; font-size: 41px; line-height: 1.34; }
+.intro-panel > p { max-width: 420px; font-size: 14px; line-height: 1.85; }
+.eyebrow { letter-spacing: .06em; }
+.mascot-stage { height: 248px; border: 0; border-radius: 24px; background: linear-gradient(145deg, #fff7dc, #f6e7cf); box-shadow: inset 0 0 0 1px rgba(116,91,54,.1); }
+.mascot-stage::before { height: 0; }
+.booth-sign { top: 18px; left: 18px; color: #756c5f; letter-spacing: .1em; }
+.booth-sign span { border-radius: 999px; background: var(--red); }
+.phone-prop { display: none; }
+.mascot-caption { left: 14px; bottom: 14px; border-radius: 999px; box-shadow: 0 5px 16px rgba(23,23,20,.12); }
+.privacy-note { margin-top: 14px; padding: 11px 14px; border-radius: 12px; background: rgba(255,255,255,.56); }
+.form-panel { padding-top: 34px; }
+.form-heading > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: #fff1ec; font-family: inherit; font-size: 17px; font-weight: 800; }
+.form-step-tabs { gap: 8px; }
+.form-step-tabs button { min-height: 40px; border: 0; border-radius: 999px; background: rgba(255,255,255,.55); }
+.form-step-tabs .form-step-current { background: #fff0ea; }
+.form-progress { height: 4px; border-radius: 99px; }
+.choice-grid { grid-template-columns: 1fr; gap: 10px; }
+.choice { min-height: 68px; border-radius: 14px; background: rgba(255,255,255,.72); }
+.choice-selected { background: #fff4ee; box-shadow: 0 5px 16px rgba(112,58,41,.08); }
+.segment-control { gap: 8px; border: 0; }
+.segment-control label { border: 1px solid var(--line); border-radius: 12px; }
+.segment-control .segment-selected { border-color: var(--green); background: var(--green); }
+select, .riddle-box input[type="text"], .chat-form input { border-radius: 12px; }
+.draw-button { border-radius: 14px; box-shadow: 0 6px 0 #8d2f25; }
+.draw-button:hover:not(:disabled) { box-shadow: 0 3px 0 #8d2f25; transform: translateY(3px); }
+.step-back-button { border-radius: 14px; background: rgba(255,255,255,.55); }
+.destination-hero { border: 0; border-radius: 24px; box-shadow: 0 10px 30px rgba(69,52,34,.1); }
+.destination-kicker, .block-label { letter-spacing: .03em; }
+.destination-location span, .project-conditions > div, .project-conditions dt { border-radius: 8px; }
+.destination-mission { border-left: 0; border-radius: 14px; background: #fff3eb; }
+.route-map, .result-heading, .mission-block, .lucky-block, .ai-panel, .memory-bookmark-panel, .discovery-collection { border-radius: 18px; }
+.result-heading { border: 0; background: rgba(255,255,255,.55); }
+.result-seal { border-color: var(--red); background: #fffaf0; }
+.mission-button, .same-conditions-button, .ai-button, .discovery-button { border-radius: 12px; box-shadow: none; }
+.extras-accordion, .proof-accordion { border-radius: 14px; }
+
+@media (min-width: 851px) {
+  .app-shell { width: min(100%, 1040px); }
+  .input-layout { grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: 58px; }
+  .intro-panel { padding-right: 8px; }
+}
+
+@media (max-width: 560px) {
+  .intro-panel h1 { font-size: 36px; }
+  .mascot-stage { height: 222px; }
+  .form-panel { padding-top: 26px; }
+  .draw-dock { border-radius: 18px; }
+  .destination-hero { padding: 20px; }
+}

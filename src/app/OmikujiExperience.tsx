@@ -108,7 +108,7 @@ function createFallbackResult(goal: string, companion: string, previousSpot?: st
   const companionText = companion === "ひとり" ? "自分のペースで" : `${companion}と一緒に`;
   return {
     fortune_name: "寄り道発見吉",
-    message: "AIが混み合っているため、公式企画データから今の目的に合う寄り道を選びました。現地の案内を確認しながら、気軽に楽しんでみてください。",
+    message: "公式企画データから、今の目的に合う寄り道を選びました。現地の案内を確認しながら、気軽に楽しんでみてください。",
     action_tip: `${companionText}、企画の入口で気になったものを一つ見つけよう。`,
     compatibility_note: "",
     mission: {
@@ -389,7 +389,7 @@ export default function OmikujiExperience() {
         }),
         new Promise((resolve) => window.setTimeout(resolve, 1400)),
       ]);
-      if (!response.ok) throw new Error("AIサービスが一時的に利用できません。");
+      if (!response.ok) throw new Error("おすすめ案内を一時的に利用できません。");
       const data = (await response.json()) as Result;
       setRouletteSpot(data.mission.target_spot);
       if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -402,7 +402,7 @@ export default function OmikujiExperience() {
       setRouletteSpot(fallback.mission.target_spot);
       setIsFallbackResult(true);
       withViewTransition(() => setResult(fallback));
-      showToast("AIが混み合っているため、公式企画データから提案しました");
+      showToast("公式企画データからおすすめを選びました");
       console.warn("Using local festival fallback:", requestError);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
@@ -446,7 +446,7 @@ export default function OmikujiExperience() {
       setCard({ phrase: data.phrase, accentHex: data.accent_hex });
     } catch {
       setCard({ phrase: `${result.mission.target_spot}で、今日だけの発見を。`, accentHex: "#d83a2e" });
-      showToast("AIが混み合っているため、お守りカードのひな形を作りました");
+      showToast("お守りカードを作りました");
     } finally {
       setIsGeneratingCard(false);
     }
@@ -496,7 +496,7 @@ export default function OmikujiExperience() {
     } catch {
       const correct = Boolean(expected && answer.includes(expected));
       setRiddleResult({ correct, feedback: correct ? "いい発見！その調子で会場を巡ってみよう。" : "答えは現地で探してみよう。見つけた瞬間がミッション達成！" });
-      showToast("AIが混み合っているため、やさしい答え合わせに切り替えました");
+      showToast("やさしい答え合わせに切り替えました");
     } finally {
       setIsCheckingRiddle(false);
     }
@@ -557,7 +557,7 @@ export default function OmikujiExperience() {
         card_message: "立ち止まって見つけた一枚が、今日だけの思い出になる。",
         next_spot: nextSpot.name,
       });
-      showToast("AIが混み合っているため、発見スタンプのひな形を作りました");
+      showToast("発見スタンプを作りました");
       console.warn("Using local discovery fallback:", verifyRequestError);
     } finally {
       setIsVerifying(false);
@@ -595,7 +595,7 @@ export default function OmikujiExperience() {
       setBookmark({ title: data.title, closingComment: data.closing_comment });
     } catch {
       setBookmark({ title: "今日の寄り道しおり", closingComment: "今日見つけた小さな発見が、きっと次の楽しい寄り道につながります。" });
-      showToast("AIが混み合っているため、しおりのひな形を作りました");
+      showToast("思い出しおりを作りました");
     } finally {
       setIsCreatingBookmark(false);
     }
@@ -614,7 +614,7 @@ export default function OmikujiExperience() {
     context.fillRect(0, 0, canvas.width, 30);
     context.fillStyle = "#171714";
     context.font = "700 34px sans-serif";
-    context.fillText("BDSF 2026 · AIおみくじ", 70, 105);
+    context.fillText("BDSF 2026 · 寄り道おみくじ", 70, 105);
     context.font = "700 62px serif";
     context.fillText(bookmark.title, 70, 205);
     context.font = "32px sans-serif";
@@ -714,7 +714,7 @@ export default function OmikujiExperience() {
       setSummaryText(data.summary);
     } catch {
       setSummaryText(`今日は${history.length}回の寄り道を楽しみました。気になった企画へ向かった一歩が、今日だけの思い出になっています。`);
-      showToast("AIが混み合っているため、今日のまとめを作りました");
+      showToast("今日のまとめを作りました");
     } finally {
       setIsSummarizing(false);
     }
@@ -723,24 +723,24 @@ export default function OmikujiExperience() {
   return (
     <main className="app-shell">
       <header className="site-header">
-        <a className="brand" href="#top" aria-label="超パーソナルAIおみくじ トップ">
+        <a className="brand" href="#top" aria-label="BDSF 寄り道おみくじ トップ">
           <span className="brand-mark"><Image alt="" height={38} priority src="/sparkle-clean.png" unoptimized width={38} /></span>
-          <span>超パーソナル<br /><strong>AIおみくじ</strong></span>
+          <span>BDSF 2026<br /><strong>寄り道おみくじ</strong></span>
         </a>
-        <span className="festival-tag">BDSF 2026</span>
+        <span className="festival-tag">公式企画から案内</span>
       </header>
 
       {!result ? (
         <div className="input-layout" id="top">
           <section className="intro-panel">
-            <div className="eyebrow"><Star size={14} fill="currentColor" /> FESTIVAL FORTUNE</div>
-            <h1>今日のあなたに、<br /><em>最高の寄り道</em>を。</h1>
-            <p>いまの気分を選ぶだけ。AIがBDSF 2026の出店企画から、あなただけの運勢と小さなミッションを届けます。</p>
+            <div className="eyebrow"><Star size={14} fill="currentColor" /> 会場を楽しむ、ちいさなきっかけ</div>
+            <h1>今日は、どんな<br /><em>寄り道</em>をする？</h1>
+            <p>気分を3つ選ぶだけ。BDSF 2026の出店企画から、今のあなたに似合う行き先と小さなお題を届けます。</p>
             <div className={`mascot-stage mascot-progress-${selectionCount} ${selectionReaction ? `mascot-${selectionReaction.motion}` : ""}`}>
-              <div className="booth-sign" aria-hidden="true">AI FORTUNE BOOTH <span>01</span></div>
+              <div className="booth-sign" aria-hidden="true">YORIMICHI GUIDE <span>01</span></div>
               <div className="mascot-visual">
                 <Image
-                  alt="虹色の瞳を持つAIおみくじの案内キャラクター"
+                  alt="寄り道おみくじの案内キャラクター"
                   className="mascot-image"
                   height={390}
                   priority
@@ -755,7 +755,7 @@ export default function OmikujiExperience() {
                 <div className="phone-speaker" />
                 <div className="phone-screen">
                   <span className="phone-orb">✦</span>
-                  <small>AIおみくじ</small>
+                  <small>寄り道おみくじ</small>
                   <strong>今日の<br />寄り道</strong>
                 </div>
                 <span className="phone-button" />
@@ -764,7 +764,7 @@ export default function OmikujiExperience() {
               <Image alt="" className="stage-sparkle stage-sparkle-small" height={38} src="/sparkle-clean.png" unoptimized width={38} />
               <span className="mascot-caption" aria-live="polite" key={selectionReaction?.key || "idle"}>{mascotMessage}</span>
             </div>
-            <div className="privacy-note"><Check size={16} /> 入力内容は AI おみくじの生成に使用されます</div>
+            <div className="privacy-note"><Check size={16} /> 入力はおすすめを選ぶためだけに使います</div>
           </section>
 
           <section className="form-panel" aria-labelledby="form-title">
@@ -854,8 +854,8 @@ export default function OmikujiExperience() {
               </dl>
             )}
             <div className="destination-mission"><small>ここでやること</small><strong>{result.mission.title}</strong><p>{result.mission.description}</p></div>
-            <div className="route-map" aria-label={`AIおみくじブース S103から${missionSpot?.location || "目的地"}までのエリア案内`}>
-              <div className="route-map-heading"><span>AREA GUIDE</span><strong>S103から{destinationPoint.zone}へ</strong></div>
+            <div className="route-map" aria-label={`おみくじブース S103から${missionSpot?.location || "目的地"}までのエリア案内`}>
+              <div className="route-map-heading"><span>会場案内</span><strong>S103から{destinationPoint.zone}へ</strong></div>
               <div className="area-route">
                 <span className="area-node area-start"><i>1</i><small>現在地</small><strong>S103</strong></span>
                 <span className="area-arrow" aria-hidden="true"><ArrowRight size={20} /></span>
@@ -868,7 +868,7 @@ export default function OmikujiExperience() {
           </article>
           <div className="result-heading">
             <Image alt="" className="result-sparkle" height={80} src="/sparkle-clean.png" unoptimized width={80} />
-            <div className="eyebrow"><Sparkles size={14} /> YOUR FESTIVAL FORTUNE</div>
+            <div className="eyebrow"><Sparkles size={14} /> 今日の寄り道運</div>
             <p>今日のあなたの運勢は</p>
             <h1 aria-label={result.fortune_name} className={getFortuneNameSize(result.fortune_name)}>
               {Array.from(result.fortune_name).map((char, index) => (
@@ -877,12 +877,12 @@ export default function OmikujiExperience() {
                 </span>
               ))}
             </h1>
-            <div className="result-seal"><Star size={18} fill="currentColor" /> AI御籤</div>
+            <div className="result-seal"><Star size={18} fill="currentColor" /> 御籤</div>
           </div>
           <blockquote>{result.message}</blockquote>
           <div className="result-grid">
             <article className={`mission-block ${missionComplete ? "mission-complete" : ""}`}>
-              <div className="block-label"><span>MISSION</span> 到着したら</div>
+              <div className="block-label"><span>お題</span> 到着したら</div>
               <h2>{result.mission.title}</h2>
               <p>{result.mission.description}</p>
               <button
@@ -895,7 +895,7 @@ export default function OmikujiExperience() {
               </button>
               {missionComplete && (
                 <div className="mission-stamp" role="status">
-                  MISSION<br /><strong>達成</strong>
+                  お題<br /><strong>達成</strong>
                   {stampParticles.map((particle, index) => (
                     <span
                       aria-hidden="true"
@@ -935,13 +935,13 @@ export default function OmikujiExperience() {
                   </form>
                 )}
                 <div className="photo-box">
-                  <div className="block-label"><span>DISCOVERY</span> 今日の発見を写真に残す</div>
+                  <div className="block-label"><span>発見</span> 今日の一枚を残す</div>
                   <div className="photo-rally-task"><Trophy size={15} /><div><small>今日のお題フォトラリー</small><strong>{photoRallyPrompt}</strong></div></div>
                   <label className="ai-button">
                     <Camera size={14} /> 発見を撮る・選ぶ
                     <input accept="image/*" hidden onChange={handlePhotoSelect} type="file" />
                   </label>
-                  <p className="privacy-hint">写真は発見スタンプの作成にAIへ送信します。このアプリには保存しません。しおりに追加する写真は、この端末の画面上で最大3枚だけ保持します。</p>
+                  <p className="privacy-hint">写真は発見コメントを作るために送信し、このアプリには保存しません。しおり用の写真は、この端末の画面上で最大3枚だけ保持します。</p>
                   {photoPreview && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img alt="今日の発見の写真プレビュー" className="photo-preview" src={photoPreview} />
@@ -956,7 +956,7 @@ export default function OmikujiExperience() {
                       <div className="discovery-stamp"><Sparkles size={17} /><strong>{discoveryResult.stamp_title}</strong></div>
                       <p>{discoveryResult.comment}</p>
                       <div className={discoveryResult.rally_complete ? "rally-result rally-complete" : "rally-result"}>{discoveryResult.rally_complete ? <Check size={14} /> : <Sparkles size={14} />}{discoveryResult.rally_complete ? "お題フォトラリーもクリア！" : "お題とは別の発見も素敵！"}</div>
-                      <div className="next-stop"><small>NEXT DETOUR</small><strong>{discoveryResult.next_spot}</strong><span>次の寄り道におすすめ</span></div>
+                      <div className="next-stop"><small>次の寄り道</small><strong>{discoveryResult.next_spot}</strong><span>このあと立ち寄るなら</span></div>
                       <div className="discovery-card-unlock"><BookMarked size={15} /><div><small>魅力カードを解除</small><strong>{discoveryResult.card_title}</strong><p>{discoveryResult.card_message}</p></div></div>
                     </div>
                   )}
@@ -964,7 +964,7 @@ export default function OmikujiExperience() {
               </details>
             </article>
             <aside className="lucky-block">
-              <div className="block-label"><span>LUCKY</span> 今日の引き寄せ</div>
+              <div className="block-label"><span>おまけ</span> 今日のラッキー</div>
               <dl>
                 <div><dt><span className="color-dot" /> COLOR</dt><dd>{result.lucky_elements.color}</dd></div>
                 <div><dt><Utensils size={15} /> FOOD</dt><dd>{result.lucky_elements.food}</dd></div>
@@ -1005,7 +1005,7 @@ export default function OmikujiExperience() {
               </div>
             )}
             <div aria-live="polite" className="ai-panel chat-panel">
-              <h3><MessageCircle size={14} /> AIにもっと聞いてみる</h3>
+              <h3><MessageCircle size={14} /> 案内係に聞いてみる</h3>
               {chatMessages.length === 0 && <p className="chat-hint">運勢やミッションについて気になることを聞いてみましょう</p>}
               <div className="chat-log">
                 {chatMessages.map((entry, index) => (
@@ -1055,7 +1055,7 @@ export default function OmikujiExperience() {
                     ))}
                   </div>
                   {!bookmark ? <button className="ai-button" disabled={isCreatingBookmark} onClick={createBookmark} type="button">{isCreatingBookmark ? <RefreshCw className="spin" size={14} /> : <Images size={14} />} しおりを作る（最大3枚）</button> : (
-                    <div className="bookmark-preview"><small>BDSF 2026 · AIおみくじ</small><strong>{bookmark.title}</strong><p>{bookmark.closingComment}</p><button className="ai-button" onClick={exportBookmark} type="button"><Share2 size={14} /> 画像を保存・共有</button></div>
+                    <div className="bookmark-preview"><small>BDSF 2026 · 寄り道おみくじ</small><strong>{bookmark.title}</strong><p>{bookmark.closingComment}</p><button className="ai-button" onClick={exportBookmark} type="button"><Share2 size={14} /> 画像を保存・共有</button></div>
                   )}
                 </>
               )}
@@ -1088,7 +1088,7 @@ export default function OmikujiExperience() {
             <Image alt="" className="drawing-sparkle drawing-sparkle-one" height={72} src="/sparkle-clean.png" unoptimized width={72} />
             <Image alt="" className="drawing-sparkle drawing-sparkle-two" height={46} src="/sparkle-clean.png" unoptimized width={46} />
             <Image
-              alt="運勢を読み解くAIおみくじの案内キャラクター"
+              alt="運勢を読み解く寄り道おみくじの案内キャラクター"
               className="drawing-mascot"
               height={205}
               src="/mascot-clean.png"
@@ -1120,7 +1120,7 @@ export default function OmikujiExperience() {
           ))}
         </div>
       )}
-      <footer>超パーソナルAIおみくじ <span>·</span> 学園祭を楽しむためのエンターテインメントです</footer>
+      <footer>BDSF 寄り道おみくじ <span>·</span> 学園祭を楽しむためのエンターテインメントです</footer>
     </main>
   );
 }
