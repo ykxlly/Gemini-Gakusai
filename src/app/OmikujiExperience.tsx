@@ -737,7 +737,7 @@ export default function OmikujiExperience() {
             <h1>今日は、どんな<br /><em>寄り道</em>をする？</h1>
             <p>気分を3つ選ぶだけ。BDSF 2026の出店企画から、今のあなたに似合う行き先と小さなお題を届けます。</p>
             <div className={`mascot-stage mascot-progress-${selectionCount} ${selectionReaction ? `mascot-${selectionReaction.motion}` : ""}`}>
-              <div className="booth-sign" aria-hidden="true">YORIMICHI GUIDE <span>01</span></div>
+              <div className="booth-sign" aria-hidden="true">文化祭の寄り道案内 <span>一</span></div>
               <div className="mascot-visual">
                 <Image
                   alt="寄り道おみくじの案内キャラクター"
@@ -751,14 +751,10 @@ export default function OmikujiExperience() {
                 <span aria-hidden="true" className="eye-glint eye-glint-left" />
                 <span aria-hidden="true" className="eye-glint eye-glint-right" />
               </div>
-              <div className="phone-prop" aria-hidden="true">
-                <div className="phone-speaker" />
-                <div className="phone-screen">
-                  <span className="phone-orb">✦</span>
-                  <small>寄り道おみくじ</small>
-                  <strong>今日の<br />寄り道</strong>
-                </div>
-                <span className="phone-button" />
+              <div className="guidebook-prop" aria-hidden="true">
+                <small>BDSF 2026</small>
+                <strong>寄り道<br />案内帳</strong>
+                <span>会場でひらく</span>
               </div>
               <Image alt="" className="stage-sparkle stage-sparkle-large" height={78} src="/sparkle-clean.png" unoptimized width={78} />
               <Image alt="" className="stage-sparkle stage-sparkle-small" height={38} src="/sparkle-clean.png" unoptimized width={38} />
@@ -916,7 +912,7 @@ export default function OmikujiExperience() {
                       checkRiddle();
                     }}
                   >
-                    <div className="block-label"><span>QUIZ</span> なぞなぞ</div>
+                    <div className="block-label"><span>問</span> なぞなぞ</div>
                     <p>{result.mission.riddle}</p>
                     <input
                       onChange={(event) => setRiddleAnswer(event.target.value)}
@@ -966,9 +962,9 @@ export default function OmikujiExperience() {
             <aside className="lucky-block">
               <div className="block-label"><span>おまけ</span> 今日のラッキー</div>
               <dl>
-                <div><dt><span className="color-dot" /> COLOR</dt><dd>{result.lucky_elements.color}</dd></div>
-                <div><dt><Utensils size={15} /> FOOD</dt><dd>{result.lucky_elements.food}</dd></div>
-                <div><dt><MapPin size={15} /> SPOT</dt><dd>{result.lucky_elements.spot}</dd></div>
+                <div><dt><span className="color-dot" /> 色</dt><dd>{result.lucky_elements.color}</dd></div>
+                <div><dt><Utensils size={15} /> 食</dt><dd>{result.lucky_elements.food}</dd></div>
+                <div><dt><MapPin size={15} /> 場所</dt><dd>{result.lucky_elements.spot}</dd></div>
               </dl>
             </aside>
           </div>
@@ -1098,7 +1094,7 @@ export default function OmikujiExperience() {
           </div>
           <strong>運勢を読み解いています</strong>
           <div className="project-roulette" aria-hidden="true">
-            <small>NEXT PROJECT</small>
+            <small>次の企画候補</small>
             <span key={rouletteSpot}>{rouletteSpot}</span>
           </div>
           <span className="loading-message" key={loadingMessageIndex}>{loadingMessages[loadingMessageIndex]}</span>

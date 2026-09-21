@@ -101,7 +101,7 @@ button, label, select { -webkit-tap-highlight-color: transparent; }
 .form-progress { height: 3px; margin: 0 0 30px; background: var(--line); overflow: hidden; }
 .form-progress-fill { height: 100%; background: var(--red); transition: width .4s cubic-bezier(.22, 1, .36, 1); }
 .form-step-tabs { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 14px; }
-.form-step-tabs button { min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-right: 1px solid var(--line); background: transparent; color: #777166; font-size: 10px; cursor: pointer; }
+.form-step-tabs button { min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-right: 1px solid var(--line); background: transparent; color: #777166; font-size: 10px; cursor: pointer; }
 .form-step-tabs button:last-child { border-right: 0; }
 .form-step-tabs button:disabled { opacity: .38; cursor: not-allowed; }
 .form-step-tabs button span { width: 19px; height: 19px; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: 9px; }
@@ -521,7 +521,33 @@ body { background: #e9e2d5; font-family: "Noto Sans JP", "Yu Gothic", sans-serif
 .form-panel { padding-top: 34px; }
 .form-heading > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: #fff1ec; font-family: inherit; font-size: 17px; font-weight: 800; }
 .form-step-tabs { gap: 8px; }
-.form-step-tabs button { min-height: 40px; border: 0; border-radius: 999px; background: rgba(255,255,255,.55); }
+.form-step-tabs button { min-height: 44px; border: 0; border-radius: 999px; background: rgba(255,255,255,.55); }
+
+.guidebook-prop {
+  position: absolute;
+  right: 8%;
+  bottom: 12%;
+  width: 112px;
+  min-height: 142px;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 2px solid var(--ink);
+  border-radius: 8px 14px 14px 8px;
+  background: #f6c03e;
+  box-shadow: 7px 8px 0 rgba(42, 40, 34, .18);
+  color: var(--ink);
+  transform: rotate(5deg);
+}
+.guidebook-prop::before { content: ""; position: absolute; inset: 7px auto 7px 8px; border-left: 2px dashed rgba(42, 40, 34, .35); }
+.guidebook-prop small, .guidebook-prop span { margin-left: 9px; font-size: 9px; font-weight: 800; }
+.guidebook-prop strong { margin-left: 9px; font-family: "Yu Mincho", "Noto Serif JP", serif; font-size: 20px; line-height: 1.35; }
+
+@media (max-width: 760px) {
+  .guidebook-prop { right: 5%; bottom: 10%; width: 92px; min-height: 118px; padding: 14px 10px; }
+  .guidebook-prop strong { font-size: 17px; }
+}
 .form-step-tabs .form-step-current { background: #fff0ea; }
 .form-progress { height: 4px; border-radius: 99px; }
 .choice-grid { grid-template-columns: 1fr; gap: 10px; }
