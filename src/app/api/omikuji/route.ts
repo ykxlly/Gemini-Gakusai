@@ -141,7 +141,7 @@ lucky_elements.spot も上記企画名から選んでください。responseSche
   try {
     const response = await generateWithAIFallback({
       gemini: ai,
-      maxOutputTokens: 420,
+      maxOutputTokens: 700,
       groqMessages: [{ role: "user", content: `${prompt}\n次のキーを省略せず、JSONだけを返してください。{ "fortune_name":"", "message":"", "action_tip":"", "compatibility_note":"", "mission":{ "title":"", "target_spot":"", "description":"", "riddle":"", "riddle_answer":"" }, "lucky_elements":{ "color":"", "food":"", "spot":"" } }` }],
       json: true,
       geminiRequest: {
