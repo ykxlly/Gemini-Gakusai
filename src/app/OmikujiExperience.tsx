@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, BookOpen, Camera, Check, CircleCheckBig, HelpCircle, MapPin, MessageCircle, RefreshCw, Send, Sparkles, Star, Utensils, Volume2, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookMarked, BookOpen, Camera, Check, CircleCheckBig, HelpCircle, Images, MapPin, MessageCircle, RefreshCw, Send, Share2, Sparkles, Star, Trophy, Utensils, Volume2, Wand2 } from "lucide-react";
 import Image from "next/image";
 import { FormEvent, useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from "react";
 import { flushSync } from "react-dom";
@@ -16,6 +16,9 @@ type Result = {
 };
 
 type Choice = { value: string; label: string; note: string };
+type DiscoveryResult = { stamp_title: string; comment: string; caption: string; rally_complete: boolean; card_title: string; card_message: string; next_spot: string };
+type MemoryEntry = { image: string; caption: string; spot: string; area: string };
+type DiscoveryCard = { spot: string; title: string; message: string };
 type FestivalSpot = {
   id: string;
   name: string;
@@ -58,6 +61,14 @@ const loadingMessages = [
 ];
 
 const confettiColors = ["#d83a2e", "#f2c84b", "#176b57", "#ffffff"];
+const photoRallyPrompts = [
+  "赤いものを見つけよう",
+  "手作りだと感じるものを見つけよう",
+  "音が聞こえてきそうな景色を見つけよう",
+  "思わず笑顔になりそうなものを見つけよう",
+  "きらきらしたものを見つけよう",
+  "今日だけの色を見つけよう",
+];
 
 const stampParticles = Array.from({ length: 6 }, (_, index) => {
   const angle = (index / 6) * Math.PI * 2;
@@ -176,7 +187,12 @@ export default function OmikujiExperience() {
   const [isCheckingRiddle, setIsCheckingRiddle] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verifyResult, setVerifyResult] = useState<{ verified: boolean; comment: string } | null>(null);
+  const [discoveryResult, setDiscoveryResult] = useState<DiscoveryResult | null>(null);
+  const [photoRallyPrompt, setPhotoRallyPrompt] = useState(photoRallyPrompts[0]);
+  const [memories, setMemories] = useState<MemoryEntry[]>([]);
+  const [discoveryCards, setDiscoveryCards] = useState<DiscoveryCard[]>([]);
+  const [bookmark, setBookmark] = useState<{ title: string; closingComment: string } | null>(null);
+  const [isCreatingBookmark, setIsCreatingBookmark] = useState(false);
   const [card, setCard] = useState<{ phrase: string; accentHex: string } | null>(null);
   const [isGeneratingCard, setIsGeneratingCard] = useState(false);
   const [narrationUrl, setNarrationUrl] = useState<string | null>(null);
@@ -312,10 +328,27 @@ export default function OmikujiExperience() {
     try {
       const stored = window.localStorage.getItem("omikuji-history");
       if (stored) setHistory(JSON.parse(stored));
+      const storedCards = window.localStorage.getItem("omikuji-discovery-cards");
+      if (storedCards) setDiscoveryCards(JSON.parse(storedCards));
     } catch {
       /* ignore corrupt storage */
     }
   }, []);
+
+  useEffect(() => {
+    if (!result) return;
+    setPhotoRallyPrompt(photoRallyPrompts[Math.floor(Math.random() * photoRallyPrompts.length)]);
+    setDiscoveryResult(null);
+    setPhotoPreview(null);
+  }, [result]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("omikuji-discovery-cards", JSON.stringify(discoveryCards.slice(-24)));
+    } catch {
+      /* ignore storage errors */
+    }
+  }, [discoveryCards]);
 
   useEffect(() => {
     if (!result) return;
@@ -339,12 +372,13 @@ export default function OmikujiExperience() {
     setRiddleAnswer("");
     setRiddleResult(null);
     setPhotoPreview(null);
-    setVerifyResult(null);
+    setDiscoveryResult(null);
     setCard(null);
     setNarrationUrl(null);
     setChatMessages([]);
     setChatInput("");
     setSummaryText("");
+    setBookmark(null);
     setIsFallbackResult(false);
     try {
       const [response] = await Promise.all([
@@ -461,13 +495,13 @@ export default function OmikujiExperience() {
   function handlePhotoSelect(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    setVerifyResult(null);
+    setDiscoveryResult(null);
     const reader = new FileReader();
     reader.onload = () => setPhotoPreview(typeof reader.result === "string" ? reader.result : null);
     reader.readAsDataURL(file);
   }
 
-  async function verifyPhoto() {
+  async function createDiscoveryStamp() {
     if (!result || !photoPreview) return;
     const [meta, base64] = photoPreview.split(",");
     const mimeType = meta.match(/data:(.*);base64/)?.[1] || "image/jpeg";
@@ -481,17 +515,121 @@ export default function OmikujiExperience() {
           missionDescription: result.mission.description,
           imageBase64: base64,
           mimeType,
+          rallyPrompt: photoRallyPrompt,
         }),
       });
-      if (!response.ok) throw new Error("写真の確認に失敗しました。");
-      const data = (await response.json()) as { verified: boolean; comment: string };
-      setVerifyResult(data);
-      if (data.verified && !missionComplete) celebrateMission();
+      if (!response.ok) throw new Error("発見スタンプを作れませんでした。");
+      const data = (await response.json()) as DiscoveryResult;
+      setDiscoveryResult(data);
+      setMemories((current) => [...current.filter((entry) => entry.image !== photoPreview), {
+        image: photoPreview,
+        caption: data.caption,
+        spot: result.mission.target_spot,
+        area: missionSpot?.location || "会場",
+      }].slice(-3));
+      setDiscoveryCards((current) => {
+        const next = [...current.filter((card) => card.spot !== result.mission.target_spot), {
+          spot: result.mission.target_spot,
+          title: data.card_title,
+          message: data.card_message,
+        }];
+        return next.slice(-24);
+      });
+      if (!missionComplete) celebrateMission();
     } catch (verifyRequestError) {
       showToast(verifyRequestError instanceof Error ? verifyRequestError.message : "通信エラーが発生しました。");
     } finally {
       setIsVerifying(false);
     }
+  }
+
+  async function createBookmark() {
+    if (!result || memories.length === 0 || isCreatingBookmark) return;
+    setIsCreatingBookmark(true);
+    try {
+      const response = await fetch("/api/omikuji/bookmark", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fortuneName: result.fortune_name, memories: memories.map(({ caption, spot, area }) => ({ caption, spot, area })) }),
+      });
+      if (!response.ok) throw new Error("しおりを作れませんでした。");
+      const data = (await response.json()) as { title: string; closing_comment: string };
+      setBookmark({ title: data.title, closingComment: data.closing_comment });
+    } catch {
+      setBookmark({ title: "今日の寄り道しおり", closingComment: "今日見つけた小さな発見が、きっと次の楽しい寄り道につながります。" });
+      showToast("AIが混み合っているため、しおりのひな形を作りました");
+    } finally {
+      setIsCreatingBookmark(false);
+    }
+  }
+
+  async function exportBookmark() {
+    if (!bookmark || !result) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.fillStyle = "#f7f4eb";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = "#d83a2e";
+    context.fillRect(0, 0, canvas.width, 30);
+    context.fillStyle = "#171714";
+    context.font = "700 34px sans-serif";
+    context.fillText("BDSF 2026 · AIおみくじ", 70, 105);
+    context.font = "700 62px serif";
+    context.fillText(bookmark.title, 70, 205);
+    context.font = "32px sans-serif";
+    context.fillStyle = "#5f5b51";
+    context.fillText(`運勢：${result.fortune_name}`, 70, 270);
+    let y = 340;
+    for (const [index, memory] of memories.entries()) {
+      const image = new window.Image();
+      image.src = memory.image;
+      await new Promise<void>((resolve) => { image.onload = () => resolve(); image.onerror = () => resolve(); });
+      if (image.complete && image.naturalWidth) {
+        const ratio = Math.min(940 / image.naturalWidth, 360 / image.naturalHeight);
+        const width = image.naturalWidth * ratio;
+        const height = image.naturalHeight * ratio;
+        context.drawImage(image, 70, y, width, height);
+        y += height + 26;
+      }
+      context.fillStyle = "#176b57";
+      context.font = "700 25px sans-serif";
+      context.fillText(`${index + 1}. ${memory.spot}`, 70, y);
+      context.fillStyle = "#171714";
+      context.font = "31px sans-serif";
+      context.fillText(memory.caption, 70, y + 47);
+      y += 105;
+    }
+    context.fillStyle = "#f2c84b";
+    context.fillRect(55, Math.min(y + 15, 1660), 970, 3);
+    context.fillStyle = "#5f5b51";
+    context.font = "30px sans-serif";
+    const words = Array.from(bookmark.closingComment);
+    let line = "";
+    let lineY = Math.min(y + 80, 1730);
+    for (const word of words) {
+      if (context.measureText(line + word).width > 900) { context.fillText(line, 70, lineY); line = word; lineY += 45; } else line += word;
+    }
+    if (line) context.fillText(line, 70, lineY);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blob) return;
+    const file = new File([blob], "bdsf-omide-shiori.png", { type: "image/png" });
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ title: bookmark.title, files: [file] });
+        return;
+      } catch (shareError) {
+        if (shareError instanceof DOMException && shareError.name === "AbortError") return;
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = file.name;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   async function sendChatMessage(event: FormEvent<HTMLFormElement>) {
@@ -729,7 +867,7 @@ export default function OmikujiExperience() {
                 </div>
               )}
               <details className="proof-accordion">
-                <summary>他の方法で達成を証明する <span>任意</span></summary>
+                <summary><Camera size={15} /> 発見カメラで遊ぶ <span>写真は任意</span></summary>
                 {result.mission.riddle && (
                   <form
                     className="riddle-box"
@@ -757,25 +895,30 @@ export default function OmikujiExperience() {
                   </form>
                 )}
                 <div className="photo-box">
-                  <div className="block-label"><span>PHOTO</span> 写真でミッション達成を証明</div>
+                  <div className="block-label"><span>DISCOVERY</span> 今日の発見を写真に残す</div>
+                  <div className="photo-rally-task"><Trophy size={15} /><div><small>今日のお題フォトラリー</small><strong>{photoRallyPrompt}</strong></div></div>
                   <label className="ai-button">
-                    <Camera size={14} /> 写真を選ぶ
+                    <Camera size={14} /> 発見を撮る・選ぶ
                     <input accept="image/*" hidden onChange={handlePhotoSelect} type="file" />
                   </label>
-                  <p className="privacy-hint">写真は AI に送信して判定します。このアプリには保存しません</p>
+                  <p className="privacy-hint">写真は発見スタンプの作成にAIへ送信します。このアプリには保存しません。しおりに追加する写真は、この端末の画面上で最大3枚だけ保持します。</p>
                   {photoPreview && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img alt="ミッションの証拠写真プレビュー" className="photo-preview" src={photoPreview} />
+                    <img alt="今日の発見の写真プレビュー" className="photo-preview" src={photoPreview} />
                   )}
                   {photoPreview && (
-                    <button className="ai-button" disabled={isVerifying} onClick={verifyPhoto} type="button">
-                      {isVerifying ? <RefreshCw className="spin" size={14} /> : <Sparkles size={14} />} AIに確認してもらう
+                    <button className="discovery-button" disabled={isVerifying} onClick={createDiscoveryStamp} type="button">
+                      {isVerifying ? <RefreshCw className="spin" size={14} /> : <Sparkles size={14} />} 発見スタンプをもらう
                     </button>
                   )}
-                  {verifyResult && (
-                    <p aria-live="polite" className={verifyResult.verified ? "riddle-correct" : "riddle-incorrect"}>
-                      {verifyResult.comment}
-                    </p>
+                  {discoveryResult && (
+                    <div className="discovery-result" aria-live="polite">
+                      <div className="discovery-stamp"><Sparkles size={17} /><strong>{discoveryResult.stamp_title}</strong></div>
+                      <p>{discoveryResult.comment}</p>
+                      <div className={discoveryResult.rally_complete ? "rally-result rally-complete" : "rally-result"}>{discoveryResult.rally_complete ? <Check size={14} /> : <Sparkles size={14} />}{discoveryResult.rally_complete ? "お題フォトラリーもクリア！" : "お題とは別の発見も素敵！"}</div>
+                      <div className="next-stop"><small>NEXT DETOUR</small><strong>{discoveryResult.next_spot}</strong><span>次の寄り道におすすめ</span></div>
+                      <div className="discovery-card-unlock"><BookMarked size={15} /><div><small>魅力カードを解除</small><strong>{discoveryResult.card_title}</strong><p>{discoveryResult.card_message}</p></div></div>
+                    </div>
                   )}
                 </div>
               </details>
@@ -857,6 +1000,32 @@ export default function OmikujiExperience() {
                 <p className="chat-hint">あと{2 - history.length}回引くと「今日のまとめ」を聞けます</p>
               )}
             </div>
+            <div className="memory-bookmark-panel" aria-live="polite">
+              <h3><Images size={15} /> 今日の思い出しおり</h3>
+              {memories.length === 0 ? <p>発見カメラで写真を1枚撮ると、ここに思い出をまとめられます。</p> : (
+                <>
+                  <div className="memory-strip">
+                    {memories.map((memory) => (
+                      <figure key={memory.image}>
+                        {/* Photos are local data URLs chosen by the visitor, so Next.js image optimization cannot process them. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img alt={`${memory.spot}での発見`} src={memory.image} />
+                        <figcaption>{memory.caption}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                  {!bookmark ? <button className="ai-button" disabled={isCreatingBookmark} onClick={createBookmark} type="button">{isCreatingBookmark ? <RefreshCw className="spin" size={14} /> : <Images size={14} />} しおりを作る（最大3枚）</button> : (
+                    <div className="bookmark-preview"><small>BDSF 2026 · AIおみくじ</small><strong>{bookmark.title}</strong><p>{bookmark.closingComment}</p><button className="ai-button" onClick={exportBookmark} type="button"><Share2 size={14} /> 画像を保存・共有</button></div>
+                  )}
+                </>
+              )}
+            </div>
+            {discoveryCards.length > 0 && (
+              <div className="discovery-collection">
+                <h3><BookMarked size={15} /> BDSF発見カード {discoveryCards.length}</h3>
+                <div>{discoveryCards.slice(-6).reverse().map((card) => <article key={card.spot}><small>{card.spot}</small><strong>{card.title}</strong><p>{card.message}</p></article>)}</div>
+              </div>
+            )}
           </details>
           <div className="result-actions">
             <button className="same-conditions-button" disabled={isLoading} onClick={requestFortune} type="button"><RefreshCw size={18} /> 同じ条件で別の企画</button>

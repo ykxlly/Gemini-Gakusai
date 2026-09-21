@@ -1,21 +1,30 @@
 import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
 import { generateContentWithFallback, getGenAI } from "@/lib/gemini";
+import spots from "@/data/spots.json";
 
 type VerifyRequest = {
   spot?: unknown;
   missionDescription?: unknown;
   imageBase64?: unknown;
   mimeType?: unknown;
+  rallyPrompt?: unknown;
 };
+
+const spotNames = spots.map((spot) => spot.name);
 
 const responseSchema = {
   type: Type.OBJECT,
   properties: {
-    verified: { type: Type.BOOLEAN, description: "写真がミッションの内容やスポットと合致していそうか" },
-    comment: { type: Type.STRING, description: "来場者への短い実況コメント(30〜60文字)。合致していなくても前向きに。" },
+    stamp_title: { type: Type.STRING, description: "写真から見つけた魅力を表す、短い発見スタンプ名。例：熱気を発見！" },
+    comment: { type: Type.STRING, description: "マスコット視点の前向きな実況コメント(30〜60文字)" },
+    caption: { type: Type.STRING, description: "思い出しおり用の短い写真キャプション(15〜30文字)" },
+    rally_complete: { type: Type.BOOLEAN, description: "写真がフォトラリーのお題を満たしていそうならtrue。曖昧ならtrue寄り" },
+    card_title: { type: Type.STRING, description: "この企画の魅力カード名。例：未知の世界カード" },
+    card_message: { type: Type.STRING, description: "魅力カードの短い説明(20〜40文字)" },
+    next_spot: { type: Type.STRING, enum: spotNames, description: "次に立ち寄ると楽しめそうな公式掲載企画を1つ。現在のspotとは異なる名前" },
   },
-  required: ["verified", "comment"],
+  required: ["stamp_title", "comment", "caption", "rally_complete", "card_title", "card_message", "next_spot"],
 } as const;
 
 function isText(value: unknown): value is string {
@@ -37,15 +46,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
   }
 
-  if (!isText(body.spot) || !isText(body.missionDescription) || !isText(body.imageBase64) || !isText(body.mimeType)) {
+  if (!isText(body.spot) || !isText(body.missionDescription) || !isText(body.imageBase64) || !isText(body.mimeType) || !isText(body.rallyPrompt)) {
     return NextResponse.json(
-      { error: "spot, missionDescription, imageBase64, and mimeType are required strings." },
+      { error: "spot, missionDescription, imageBase64, mimeType, and rallyPrompt are required strings." },
       { status: 400 },
     );
   }
 
-  const prompt = `あなたは学園祭「超パーソナルAIおみくじ」のミッション判定係です。
-これはエンタメ用の軽い判定で、来場者を責めたり否定的に扱ってはいけません。写真がスポット「${body.spot.trim()}」やミッション内容「${body.missionDescription.trim()}」と関連していそうであれば verified を true にしてください。判断が難しい場合は好意的に true 寄りに解釈してください。comment には実況風の短いポジティブなコメントを日本語で書いてください。`;
+  const prompt = `あなたは学園祭「超パーソナルAIおみくじ」の発見スタンプカメラです。
+これは写真の正誤や本人確認をする機能ではありません。写真に写った色・音・手作り感・にぎわい・遊び心などの魅力を見つけ、明るく褒めてください。人物の属性・年齢・容姿・感情を推測しないでください。
+
+来場者が向かった企画: 「${body.spot.trim()}」
+その企画でのミッション: 「${body.missionDescription.trim()}」
+今回のフォトラリーお題: 「${body.rallyPrompt.trim()}」
+
+stamp_titleは「〜を発見！」の形にしてください。commentは案内キャラクターの短い実況にしてください。captionは思い出しおりに載せる一文です。
+rally_completeはお題と少しでも関連していればtrueにしてください。card_titleとcard_messageは、この企画で撮影したことで解除される魅力カードです。
+next_spotは、上記の企画とは異なる公式掲載企画から選び、写真の雰囲気に合う次の寄り道を提案してください。responseSchemaに完全準拠したJSONのみを返してください。`;
 
   try {
     const response = await generateContentWithFallback(ai, {
@@ -68,7 +85,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(JSON.parse(response.text));
   } catch (error) {
-    console.error("Failed to verify mission photo:", error);
-    return NextResponse.json({ error: "Failed to verify the photo." }, { status: 502 });
+    console.error("Failed to create discovery stamp:", error);
+    return NextResponse.json({ error: "Failed to create discovery stamp." }, { status: 502 });
   }
 }

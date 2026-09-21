@@ -381,12 +381,51 @@ blockquote { margin: 0 auto 44px; max-width: 760px; font-family: "Yu Mincho", se
 .riddle-correct { color: var(--green); font-weight: 700; }
 .riddle-incorrect { color: #7a756a; }
 .photo-preview { display: block; width: 100%; max-width: 200px; margin: 10px 0; border: 1px solid var(--line); }
+.photo-rally-task { margin: 0 0 13px; padding: 11px; display: flex; align-items: center; gap: 9px; background: #fff5ce; color: #7a5a05; }
+.photo-rally-task small, .photo-rally-task strong { display: block; }
+.photo-rally-task small { font-size: 9px; }
+.photo-rally-task strong { margin-top: 2px; font-family: "Yu Mincho", serif; font-size: 14px; }
+.discovery-button { min-height: 38px; margin-top: 4px; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--red); color: white; font-size: 11px; font-weight: 800; cursor: pointer; box-shadow: 3px 3px 0 var(--ink); }
+.discovery-button:disabled { opacity: .5; }
+.discovery-result { margin-top: 14px; padding: 14px; border: 1px solid #c7dbce; background: #f2f8f1; }
+.discovery-stamp { display: inline-flex; align-items: center; gap: 6px; padding: 8px 11px; border: 2px solid var(--green); border-radius: 999px; color: var(--green); font-size: 13px; transform: rotate(-2deg); animation: mission-stamp-in .45s cubic-bezier(.34, 1.56, .64, 1) both; }
+.discovery-result > p { margin: 11px 0; color: #355145; font-size: 12px; line-height: 1.7; }
+.rally-result { display: inline-flex; align-items: center; gap: 5px; color: #6e695d; font-size: 10px; font-weight: 700; }
+.rally-complete { color: var(--green); }
+.next-stop { margin-top: 13px; padding: 11px; border-left: 3px solid var(--red); background: #fffdf8; }
+.next-stop small, .next-stop strong, .next-stop span { display: block; }
+.next-stop small { color: var(--red); font-size: 8px; font-weight: 900; letter-spacing: .12em; }
+.next-stop strong { margin: 4px 0 2px; font-family: "Yu Mincho", serif; font-size: 15px; }
+.next-stop span { color: #777166; font-size: 10px; }
+.discovery-card-unlock { margin-top: 12px; padding: 10px; display: flex; gap: 8px; border: 1px solid #e3c36c; background: #fff7d9; color: #654b11; }
+.discovery-card-unlock small, .discovery-card-unlock strong { display: block; }
+.discovery-card-unlock small { font-size: 8px; }
+.discovery-card-unlock strong { margin-top: 3px; font-size: 12px; }
+.discovery-card-unlock p { margin: 4px 0 0; font-size: 10px; line-height: 1.5; }
 .chat-panel .chat-log { margin-bottom: 10px; max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
 .chat-bubble { margin: 0; padding: 9px 13px; font-size: 12px; line-height: 1.6; max-width: 85%; }
 .chat-bubble-user { align-self: flex-end; background: var(--ink); color: white; }
 .chat-bubble-model { align-self: flex-start; background: rgba(255,255,255,.85); border: 1px solid var(--line); }
 .chat-form { display: flex; gap: 8px; }
 .chat-form input { flex: 1; padding: 9px 11px; border: 1px solid var(--line); background: rgba(255,255,255,.7); }
+.memory-bookmark-panel, .discovery-collection { margin-top: 16px; padding: 16px; border: 1px solid var(--line); background: rgba(255,255,255,.5); }
+.memory-bookmark-panel h3, .discovery-collection h3 { margin: 0 0 11px; display: flex; align-items: center; gap: 6px; color: #777166; font-size: 11px; letter-spacing: .06em; }
+.memory-bookmark-panel > p { margin: 0; color: #898478; font-size: 11px; line-height: 1.7; }
+.memory-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 13px; }
+.memory-strip figure { min-width: 0; margin: 0; }
+.memory-strip img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid var(--line); }
+.memory-strip figcaption { margin-top: 4px; overflow: hidden; color: #5f5b51; font-size: 9px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+.bookmark-preview { margin-top: 13px; padding: 16px; border: 2px solid var(--red); background: #fffaf1; box-shadow: 4px 4px 0 var(--yellow); }
+.bookmark-preview small, .bookmark-preview strong { display: block; }
+.bookmark-preview small { color: var(--red); font-size: 8px; font-weight: 900; letter-spacing: .12em; }
+.bookmark-preview strong { margin: 7px 0; font-family: "Yu Mincho", serif; font-size: 20px; }
+.bookmark-preview p { margin: 0 0 12px; color: #5f5b51; font-size: 12px; line-height: 1.7; }
+.discovery-collection > div { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.discovery-collection article { padding: 10px; border: 1px solid #e0c980; background: #fff8df; }
+.discovery-collection small, .discovery-collection strong { display: block; }
+.discovery-collection small { overflow: hidden; color: #827043; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.discovery-collection strong { margin: 4px 0; font-family: "Yu Mincho", serif; font-size: 13px; }
+.discovery-collection p { margin: 0; color: #6c6044; font-size: 9px; line-height: 1.5; }
 
 footer { min-height: 50px; padding: 16px 24px; border-top: 1px solid var(--line); color: #827d72; text-align: center; font-size: 9px; }
 footer span { margin: 0 6px; }
