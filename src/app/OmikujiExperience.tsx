@@ -519,28 +519,40 @@ export default function OmikujiExperience() {
         }),
       });
       if (!response.ok) throw new Error("発見スタンプを作れませんでした。");
-      const data = (await response.json()) as DiscoveryResult;
-      setDiscoveryResult(data);
-      setMemories((current) => [...current.filter((entry) => entry.image !== photoPreview), {
-        image: photoPreview,
-        caption: data.caption,
-        spot: result.mission.target_spot,
-        area: missionSpot?.location || "会場",
-      }].slice(-3));
-      setDiscoveryCards((current) => {
-        const next = [...current.filter((card) => card.spot !== result.mission.target_spot), {
-          spot: result.mission.target_spot,
-          title: data.card_title,
-          message: data.card_message,
-        }];
-        return next.slice(-24);
-      });
-      if (!missionComplete) celebrateMission();
+      saveDiscovery((await response.json()) as DiscoveryResult);
     } catch (verifyRequestError) {
-      showToast(verifyRequestError instanceof Error ? verifyRequestError.message : "通信エラーが発生しました。");
+      const nextSpot = festivalSpots.find((spot) => spot.name !== result.mission.target_spot && spot.category !== missionSpot?.category) || festivalSpots[0];
+      saveDiscovery({
+        stamp_title: "今日のきらめきを発見！",
+        comment: "いい発見だね！写真に残したその瞬間が、今日の学園祭をもっと特別にしてくれるよ。",
+        caption: `${result.mission.target_spot}で見つけた今日の一枚`,
+        rally_complete: false,
+        card_title: "寄り道の記憶カード",
+        card_message: "立ち止まって見つけた一枚が、今日だけの思い出になる。",
+        next_spot: nextSpot.name,
+      });
+      showToast("AIが混み合っているため、発見スタンプのひな形を作りました");
+      console.warn("Using local discovery fallback:", verifyRequestError);
     } finally {
       setIsVerifying(false);
     }
+  }
+
+  function saveDiscovery(data: DiscoveryResult) {
+    if (!result || !photoPreview) return;
+    setDiscoveryResult(data);
+    setMemories((current) => [...current.filter((entry) => entry.image !== photoPreview), {
+      image: photoPreview,
+      caption: data.caption,
+      spot: result.mission.target_spot,
+      area: missionSpot?.location || "会場",
+    }].slice(-3));
+    setDiscoveryCards((current) => [...current.filter((card) => card.spot !== result.mission.target_spot), {
+      spot: result.mission.target_spot,
+      title: data.card_title,
+      message: data.card_message,
+    }].slice(-24));
+    if (!missionComplete) celebrateMission();
   }
 
   async function createBookmark() {
