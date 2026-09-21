@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "fortunes must be a non-empty array of { fortune_name, message }." }, { status: 400 });
   }
 
-  const history = body.fortunes
+  const history = body.fortunes.slice(-5)
     .map((entry, index) => `${index + 1}. ${entry.fortune_name} — ${entry.message}`)
     .join("\n");
 
@@ -46,6 +46,7 @@ export async function POST(request: Request) {
   try {
     const response = await generateWithAIFallback({
       gemini: ai,
+      maxOutputTokens: 200,
       groqMessages: [{ role: "user", content: prompt }],
       geminiRequest: {
       model: "gemini-3.6-flash",

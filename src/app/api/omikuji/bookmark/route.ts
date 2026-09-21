@@ -46,6 +46,7 @@ titleにはしおりのタイトル、closing_commentには思い出を優しく
   try {
     const response = await generateWithAIFallback({
       gemini: ai,
+      maxOutputTokens: 160,
       groqMessages: [{ role: "user", content: `${prompt}\nJSONだけを返してください。` }],
       json: true,
       geminiRequest: {

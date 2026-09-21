@@ -473,6 +473,13 @@ export default function OmikujiExperience() {
 
   async function checkRiddle() {
     if (!result || !riddleAnswer.trim()) return;
+    const normalizeAnswer = (value: string) => value.normalize("NFKC").toLowerCase().replace(/[\s、。,.!！?？・()（）]/g, "");
+    const answer = normalizeAnswer(riddleAnswer);
+    const expected = normalizeAnswer(result.mission.riddle_answer || "");
+    if (expected && (answer === expected || (expected.length >= 2 && answer.includes(expected)))) {
+      setRiddleResult({ correct: true, feedback: "いい発見！その調子で会場を巡ってみよう。" });
+      return;
+    }
     setIsCheckingRiddle(true);
     try {
       const response = await fetch("/api/omikuji/riddle", {
@@ -487,7 +494,7 @@ export default function OmikujiExperience() {
       if (!response.ok) throw new Error("答え合わせに失敗しました。");
       setRiddleResult((await response.json()) as { correct: boolean; feedback: string });
     } catch {
-      const correct = riddleAnswer.replace(/\s/g, "").includes(result.mission.riddle_answer.replace(/\s/g, ""));
+      const correct = Boolean(expected && answer.includes(expected));
       setRiddleResult({ correct, feedback: correct ? "いい発見！その調子で会場を巡ってみよう。" : "答えは現地で探してみよう。見つけた瞬間がミッション達成！" });
       showToast("AIが混み合っているため、やさしい答え合わせに切り替えました");
     } finally {
@@ -500,7 +507,23 @@ export default function OmikujiExperience() {
     if (!file) return;
     setDiscoveryResult(null);
     const reader = new FileReader();
-    reader.onload = () => setPhotoPreview(typeof reader.result === "string" ? reader.result : null);
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+      const image = new window.Image();
+      image.onload = () => {
+        const maxSide = 1280;
+        const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const context = canvas.getContext("2d");
+        if (!context) return setPhotoPreview(reader.result as string);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        setPhotoPreview(canvas.toDataURL("image/jpeg", 0.78));
+      };
+      image.onerror = () => setPhotoPreview(reader.result as string);
+      image.src = reader.result;
+    };
     reader.readAsDataURL(file);
   }
 

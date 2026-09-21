@@ -12,6 +12,7 @@ type FallbackRequest = {
   geminiRequest: GeminiRequest;
   groqMessages: GroqMessage[];
   json?: boolean;
+  maxOutputTokens?: number;
 };
 
 export type AIProvider = "gemini" | "groq";
@@ -25,7 +26,7 @@ export function isRecoverableAIError(error: unknown) {
   return status === 429 || status === 503 || error instanceof TypeError || (error instanceof Error && /timeout|network|fetch/i.test(error.message));
 }
 
-async function generateWithGroq(messages: GroqMessage[], json: boolean) {
+async function generateWithGroq(messages: GroqMessage[], json: boolean, maxOutputTokens: number) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error("GROQ_API_KEY is not configured.");
 
@@ -36,7 +37,7 @@ async function generateWithGroq(messages: GroqMessage[], json: boolean) {
       model: "qwen/qwen3.8-27b",
       messages,
       temperature: 0.7,
-      max_completion_tokens: 500,
+      max_completion_tokens: maxOutputTokens,
       ...(json ? { response_format: { type: "json_object" } } : {}),
     }),
     signal: AbortSignal.timeout(9_000),
@@ -56,10 +57,13 @@ async function generateWithGroq(messages: GroqMessage[], json: boolean) {
 }
 
 /** Uses Gemini first, then Groq only for temporary capacity or network failures. */
-export async function generateWithAIFallback({ gemini, geminiRequest, groqMessages, json = false }: FallbackRequest) {
+export async function generateWithAIFallback({ gemini, geminiRequest, groqMessages, json = false, maxOutputTokens = 300 }: FallbackRequest) {
   if (gemini) {
     try {
-      const response = await gemini.models.generateContent(geminiRequest);
+      const response = await gemini.models.generateContent({
+        ...geminiRequest,
+        config: { ...geminiRequest.config, maxOutputTokens },
+      });
       if (!response.text) throw new Error("Gemini returned an empty response.");
       return { text: response.text, provider: "gemini" as const };
     } catch (error) {
@@ -68,7 +72,7 @@ export async function generateWithAIFallback({ gemini, geminiRequest, groqMessag
     }
   }
 
-  const text = await generateWithGroq(groqMessages, json);
+  const text = await generateWithGroq(groqMessages, json, maxOutputTokens);
   return { text, provider: "groq" as const };
 }
 

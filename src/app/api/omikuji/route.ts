@@ -97,7 +97,17 @@ export async function POST(request: Request) {
     );
   }
 
-  const spotContext = spots
+  const categoryPreferences: Record<string, string[]> = {
+    "新しい発見": ["体験・ワークショップ", "マルシェ"],
+    "おいしいもの": ["学生模擬店・フード＆ドリンク", "店舗出店・フード＆ドリンク"],
+    "思い出づくり": ["体験・ワークショップ", "縁日・キッズゲーム", "マルシェ"],
+    "盛り上がりたい": ["ステージ・パフォーマンス", "スポーツ・アクティビティ", "縁日・キッズゲーム"],
+  };
+  const preferredCategories = categoryPreferences[body.goal.trim()] ?? [];
+  const preferredSpots = spots.filter((spot) => preferredCategories.includes(spot.category));
+  const candidateSpots = (preferredSpots.length >= 5 ? preferredSpots : spots).slice(0, 10);
+
+  const spotContext = candidateSpots
     .map((spot) => {
       const details = [spot.schedule && `時間: ${spot.schedule}`, spot.price && `料金: ${spot.price}`, spot.capacity && `定員: ${spot.capacity}`, spot.notice && `注意: ${spot.notice}`].filter(Boolean).join(" / ");
       return `- ${spot.name}\n  分類: ${spot.category}\n  場所: ${spot.location}\n  内容: ${spot.vibe}${details ? `\n  条件: ${details}` : ""}`;
@@ -131,6 +141,7 @@ lucky_elements.spot も上記企画名から選んでください。responseSche
   try {
     const response = await generateWithAIFallback({
       gemini: ai,
+      maxOutputTokens: 420,
       groqMessages: [{ role: "user", content: `${prompt}\n次のキーを省略せず、JSONだけを返してください。{ "fortune_name":"", "message":"", "action_tip":"", "compatibility_note":"", "mission":{ "title":"", "target_spot":"", "description":"", "riddle":"", "riddle_answer":"" }, "lucky_elements":{ "color":"", "food":"", "spot":"" } }` }],
       json: true,
       geminiRequest: {

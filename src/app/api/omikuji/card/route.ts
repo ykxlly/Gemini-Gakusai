@@ -46,6 +46,7 @@ phrase には御守りに刻む短く縁起の良い一言を、accent_hex に�
   try {
     const response = await generateWithAIFallback({
       gemini: ai,
+      maxOutputTokens: 100,
       groqMessages: [{ role: "user", content: `${prompt}\nJSONだけを返してください。` }],
       json: true,
       geminiRequest: {

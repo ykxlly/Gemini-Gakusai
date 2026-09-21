@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "message is a required string. history must be a valid turn array." }, { status: 400 });
   }
 
-  const history = (body.history as ChatTurn[] | undefined) ?? [];
+  const history = ((body.history as ChatTurn[] | undefined) ?? []).slice(-6);
 
   const systemInstruction = `あなたは学園祭「超パーソナルAIおみくじ」の案内キャラクターです。来場者が引いた運勢「${
     isText(body.fortuneName) ? body.fortuneName.trim() : "不明"
@@ -54,6 +54,7 @@ export async function POST(request: Request) {
   try {
     const response = await generateWithAIFallback({
       gemini: ai,
+      maxOutputTokens: 120,
       geminiRequest: {
         model: "gemini-3.6-flash",
         config: { systemInstruction },

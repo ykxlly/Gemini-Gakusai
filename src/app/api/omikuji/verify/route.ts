@@ -64,6 +64,7 @@ next_spotは、上記の企画とは異なる公式掲載企画から選び、�
   try {
     const response = await generateWithAIFallback({
       gemini: ai,
+      maxOutputTokens: 300,
       groqMessages: [groqImageMessage(`${prompt}\nJSONだけを返してください。`, body.imageBase64.trim(), body.mimeType.trim())],
       json: true,
       geminiRequest: {

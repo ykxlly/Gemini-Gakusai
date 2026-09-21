@@ -44,6 +44,7 @@ export async function POST(request: Request) {
   try {
     const response = await generateWithAIFallback({
       gemini: ai,
+      maxOutputTokens: 120,
       groqMessages: [{ role: "user", content: `${prompt}\nJSONだけを返してください。` }],
       json: true,
       geminiRequest: {
