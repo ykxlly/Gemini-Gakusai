@@ -91,7 +91,10 @@ export async function POST(request: Request) {
   }
 
   const spotContext = spots
-    .map((spot) => `- ${spot.name}\n  分類: ${spot.category}\n  場所: ${spot.location}\n  内容: ${spot.vibe}`)
+    .map((spot) => {
+      const details = [spot.schedule && `時間: ${spot.schedule}`, spot.price && `料金: ${spot.price}`, spot.capacity && `定員: ${spot.capacity}`, spot.notice && `注意: ${spot.notice}`].filter(Boolean).join(" / ");
+      return `- ${spot.name}\n  分類: ${spot.category}\n  場所: ${spot.location}\n  内容: ${spot.vibe}${details ? `\n  条件: ${details}` : ""}`;
+    })
     .join("\n");
 
   const partnerContext =

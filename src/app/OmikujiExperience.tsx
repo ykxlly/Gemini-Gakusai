@@ -16,6 +16,19 @@ type Result = {
 };
 
 type Choice = { value: string; label: string; note: string };
+type FestivalSpot = {
+  id: string;
+  name: string;
+  category: string;
+  location: string;
+  vibe: string;
+  schedule?: string;
+  price?: string;
+  capacity?: string;
+  notice?: string;
+};
+
+const festivalSpots = spots as FestivalSpot[];
 
 const moods: Choice[] = [
   { value: "わくわく", label: "わくわく", note: "勢いのまま楽しみたい" },
@@ -70,6 +83,34 @@ function getLocationPoint(location: string | undefined) {
   return (location && locationPoints[location]) || { x: 82, y: 50, zone: "公式案内を確認" };
 }
 
+function createFallbackResult(goal: string, companion: string, previousSpot?: string): Result {
+  const preferredCategories: Record<string, string[]> = {
+    "新しい発見": ["体験・ワークショップ", "マルシェ"],
+    "おいしいもの": ["学生模擬店・フード＆ドリンク", "店舗出店・フード＆ドリンク"],
+    "思い出づくり": ["体験・ワークショップ", "縁日・キッズゲーム", "マルシェ"],
+    "盛り上がりたい": ["ステージ・パフォーマンス", "スポーツ・アクティビティ", "縁日・キッズゲーム"],
+  };
+  const preferred = preferredCategories[goal] || [];
+  const candidates = festivalSpots.filter((spot) => preferred.includes(spot.category) && spot.name !== previousSpot);
+  const pool = candidates.length ? candidates : festivalSpots.filter((spot) => spot.name !== previousSpot);
+  const selected = pool[Math.floor(Math.random() * pool.length)] || festivalSpots[0];
+  const companionText = companion === "ひとり" ? "自分のペースで" : `${companion}と一緒に`;
+  return {
+    fortune_name: "寄り道発見吉",
+    message: "AIが混み合っているため、公式企画データから今の目的に合う寄り道を選びました。現地の案内を確認しながら、気軽に楽しんでみてください。",
+    action_tip: `${companionText}、企画の入口で気になったものを一つ見つけよう。`,
+    compatibility_note: "",
+    mission: {
+      title: `${selected.name}へ行ってみよう`,
+      target_spot: selected.name,
+      description: `${selected.vibe}。会場に着いたら、印象に残ったものを一つ見つけてみよう。`,
+      riddle: "会場で新しく見つけるとうれしいものは？",
+      riddle_answer: "発見",
+    },
+    lucky_elements: { color: "きらめく黄色", food: "会場で気になった一品", spot: selected.name },
+  };
+}
+
 function withViewTransition(update: () => void) {
   const doc = document as Document & { startViewTransition?: (callback: () => void) => void };
   if (typeof doc.startViewTransition === "function") {
@@ -116,6 +157,7 @@ function ChoiceField({ legend, name, choices, value, onChange }: {
 }
 
 export default function OmikujiExperience() {
+  const [formStep, setFormStep] = useState(0);
   const [mood, setMood] = useState("");
   const [goal, setGoal] = useState("");
   const [companion, setCompanion] = useState("");
@@ -146,7 +188,8 @@ export default function OmikujiExperience() {
   const [summaryText, setSummaryText] = useState("");
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [toast, setToast] = useState("");
-  const [rouletteSpot, setRouletteSpot] = useState(spots[0].name);
+  const [isFallbackResult, setIsFallbackResult] = useState(false);
+  const [rouletteSpot, setRouletteSpot] = useState(festivalSpots[0].name);
   const [selectionReaction, setSelectionReaction] = useState<{ message: string; motion: string; key: number } | null>(null);
   const reactionTimer = useRef<number | null>(null);
 
@@ -158,13 +201,20 @@ export default function OmikujiExperience() {
   const canSubmit = Boolean(mood && goal && companion && !isLoading);
   const selectionCount = [mood, goal, companion].filter(Boolean).length;
   const mascotMessage = selectionReaction?.message || (selectionCount === 3 ? "準備OK！運勢を引こう" : selectionCount ? `あと${3 - selectionCount}つ教えてね` : "一緒に運勢を探そう");
-  const missionSpot = result ? spots.find((spot) => spot.name === result.mission.target_spot) : undefined;
+  const missionSpot = result ? festivalSpots.find((spot) => spot.name === result.mission.target_spot) : undefined;
   const destinationPoint = getLocationPoint(missionSpot?.location);
 
   function reactToSelection(message: string, motion: string) {
     if (reactionTimer.current) window.clearTimeout(reactionTimer.current);
     setSelectionReaction({ message, motion, key: Date.now() });
     reactionTimer.current = window.setTimeout(() => setSelectionReaction(null), 1100);
+  }
+
+  function chooseAndAdvance(setter: (value: string) => void, value: string, message: string, motion: string, nextStep: number) {
+    setter(value);
+    reactToSelection(message, motion);
+    const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220;
+    window.setTimeout(() => setFormStep(nextStep), delay);
   }
 
   function celebrateMission() {
@@ -201,10 +251,10 @@ export default function OmikujiExperience() {
       setRouletteSpot("あなたに合う企画を選んでいます");
       return;
     }
-    let index = Math.floor(Math.random() * spots.length);
+    let index = Math.floor(Math.random() * festivalSpots.length);
     const timer = window.setInterval(() => {
-      index = (index + 1 + Math.floor(Math.random() * 5)) % spots.length;
-      setRouletteSpot(spots[index].name);
+      index = (index + 1 + Math.floor(Math.random() * 5)) % festivalSpots.length;
+      setRouletteSpot(festivalSpots[index].name);
     }, 90);
     return () => window.clearInterval(timer);
   }, [isLoading]);
@@ -280,8 +330,7 @@ export default function OmikujiExperience() {
     });
   }, [result]);
 
-  async function draw(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function requestFortune() {
     setError("");
     setIsPunching(true);
     window.setTimeout(() => setIsPunching(false), 380);
@@ -296,6 +345,7 @@ export default function OmikujiExperience() {
     setChatMessages([]);
     setChatInput("");
     setSummaryText("");
+    setIsFallbackResult(false);
     try {
       const [response] = await Promise.all([
         fetch("/api/omikuji", {
@@ -305,7 +355,7 @@ export default function OmikujiExperience() {
         }),
         new Promise((resolve) => window.setTimeout(resolve, 1400)),
       ]);
-      if (!response.ok) throw new Error("おみくじを引けませんでした。少し待って、もう一度お試しください。");
+      if (!response.ok) throw new Error("AIサービスが一時的に利用できません。");
       const data = (await response.json()) as Result;
       setRouletteSpot(data.mission.target_spot);
       if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -314,10 +364,21 @@ export default function OmikujiExperience() {
       withViewTransition(() => setResult(data));
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "通信エラーが発生しました。");
+      const fallback = createFallbackResult(goal, companion, result?.mission.target_spot);
+      setRouletteSpot(fallback.mission.target_spot);
+      setIsFallbackResult(true);
+      withViewTransition(() => setResult(fallback));
+      showToast("AIが混み合っているため、公式企画データから提案しました");
+      console.warn("Using local festival fallback:", requestError);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function draw(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await requestFortune();
   }
 
   function reset() {
@@ -326,6 +387,7 @@ export default function OmikujiExperience() {
     window.setTimeout(() => {
       setResult(null);
       setError("");
+      setFormStep(0);
       setMissionComplete(false);
       setIsResetting(false);
       window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
@@ -529,53 +591,68 @@ export default function OmikujiExperience() {
 
           <section className="form-panel" aria-labelledby="form-title">
             <div className="form-heading">
-              <span>01</span>
-              <div><p>3つ選んで運勢をひらく</p><h2 id="form-title">いまのあなたを教えて</h2></div>
+              <span>0{formStep + 1}</span>
+              <div><p>{formStep + 1} / 3 · ひとつ選ぶだけ</p><h2 id="form-title">{formStep === 0 ? "今の気分は？" : formStep === 1 ? "今日の目的は？" : "誰と来た？"}</h2></div>
+            </div>
+            <div className="form-step-tabs" aria-label="回答の進み具合">
+              {["気分", "目的", "同行者"].map((label, index) => (
+                <button className={formStep === index ? "form-step-current" : ""} disabled={index > formStep && ![mood, goal, companion][index - 1]} key={label} onClick={() => setFormStep(index)} type="button">
+                  <span>{index + 1}</span>{label}
+                </button>
+              ))}
             </div>
             <div className="form-progress" aria-hidden="true">
-              <div className="form-progress-fill" style={{ width: `${(selectionCount / 3) * 100}%` }} />
+              <div className="form-progress-fill" style={{ width: `${((formStep + 1) / 3) * 100}%` }} />
             </div>
             <form onSubmit={draw}>
-              <ChoiceField legend="今の気分は？" name="mood" choices={moods} value={mood} onChange={(value) => { setMood(value); reactToSelection(`${value}な気分、受け取ったよ！`, "tilt-left"); }} />
-              <ChoiceField legend="今日の目的は？" name="goal" choices={goals} value={goal} onChange={(value) => { setGoal(value); reactToSelection(`${value}にぴったりの企画を探すね`, "tilt-right"); }} />
-              <fieldset className="form-section">
-                <legend>誰と来た？</legend>
-                <div className="segment-control">
-                  {companions.map((choice) => (
-                    <label key={choice} className={companion === choice ? "segment-selected" : ""}>
-                      <input checked={companion === choice} name="companion" onChange={() => { setCompanion(choice); reactToSelection(`${choice}で楽しめる寄り道にしよう！`, "bounce"); }} type="radio" />
-                      {choice}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              {companion && companion !== "ひとり" && (
-                <div className="form-section">
-                  <label className="select-label" htmlFor="partnerMood">同行者の気分は？ <span>任意・相性診断</span></label>
-                  <select id="partnerMood" value={partnerMood} onChange={(event) => setPartnerMood(event.target.value)}>
-                    <option value="">選択しない</option>
-                    {moods.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
-                  </select>
-                </div>
-              )}
-              <div className="form-section">
-                <label className="select-label" htmlFor="mbti">MBTI <span>任意</span></label>
-                <select id="mbti" value={mbti} onChange={(event) => setMbti(event.target.value)}>
-                  <option value="">選択しない</option>
-                  {mbtiTypes.map((type) => <option key={type}>{type}</option>)}
-                </select>
+              <div className="form-step-panel" key={formStep}>
+                {formStep === 0 && <ChoiceField legend="気分に近いものを選んでください" name="mood" choices={moods} value={mood} onChange={(value) => chooseAndAdvance(setMood, value, `${value}な気分、受け取ったよ！`, "tilt-left", 1)} />}
+                {formStep === 1 && <ChoiceField legend="一番楽しみにしていることは？" name="goal" choices={goals} value={goal} onChange={(value) => chooseAndAdvance(setGoal, value, `${value}にぴったりの企画を探すね`, "tilt-right", 2)} />}
+                {formStep === 2 && (
+                  <>
+                    <fieldset className="form-section">
+                      <legend>一緒に巡る人を選んでください</legend>
+                      <div className="segment-control">
+                        {companions.map((choice) => (
+                          <label key={choice} className={companion === choice ? "segment-selected" : ""}>
+                            <input checked={companion === choice} name="companion" onChange={() => { setCompanion(choice); reactToSelection(`${choice}で楽しめる寄り道にしよう！`, "bounce"); }} type="radio" />
+                            {choice}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <details className="advanced-options">
+                      <summary>おすすめを詳しく調整する <span>任意</span></summary>
+                      {companion && companion !== "ひとり" && (
+                        <div className="form-section">
+                          <label className="select-label" htmlFor="partnerMood">同行者の気分 <span>任意・相性コメントに使用</span></label>
+                          <select id="partnerMood" value={partnerMood} onChange={(event) => setPartnerMood(event.target.value)}>
+                            <option value="">選択しない</option>
+                            {moods.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
+                          </select>
+                        </div>
+                      )}
+                      <div className="form-section">
+                        <label className="select-label" htmlFor="mbti">MBTI <span>任意</span></label>
+                        <select id="mbti" value={mbti} onChange={(event) => setMbti(event.target.value)}>
+                          <option value="">選択しない</option>
+                          {mbtiTypes.map((type) => <option key={type}>{type}</option>)}
+                        </select>
+                      </div>
+                    </details>
+                  </>
+                )}
               </div>
               {error && <p className="error-message" role="alert">{error}</p>}
               <div className="draw-dock">
-                <button className={`draw-button ${isPunching ? "button-punch" : ""}`} disabled={!canSubmit} type="submit">
-                  {isLoading ? (
-                    <><RefreshCw className="spin" size={20} /> 運勢を読み解いています...</>
-                  ) : canSubmit ? (
-                    <>おみくじを引く <ArrowRight size={20} /></>
-                  ) : (
-                    <>あと{3 - selectionCount}つ選ぶ <ArrowRight size={20} /></>
-                  )}
-                </button>
+                {formStep > 0 && <button className="step-back-button" onClick={() => setFormStep((step) => step - 1)} type="button"><ArrowLeft size={17} /> 前へ</button>}
+                {formStep < 2 ? (
+                  <button className="draw-button" disabled={formStep === 0 ? !mood : !goal} onClick={() => setFormStep((step) => step + 1)} type="button">次へ <ArrowRight size={20} /></button>
+                ) : (
+                  <button className={`draw-button ${isPunching ? "button-punch" : ""}`} disabled={!canSubmit} type="submit">
+                    {isLoading ? <><RefreshCw className="spin" size={20} /> 運勢を読み解いています...</> : companion ? <>おみくじを引く <ArrowRight size={20} /></> : <>同行者を選ぶ <ArrowRight size={20} /></>}
+                  </button>
+                )}
               </div>
             </form>
           </section>
@@ -583,6 +660,34 @@ export default function OmikujiExperience() {
       ) : (
         <section className={`result-view ${isResetting ? "result-leaving" : ""}`} aria-live="polite">
           <button className="back-button" onClick={reset} type="button"><ArrowLeft size={18} /> 選び直す</button>
+          <article className="destination-hero">
+            <div className="destination-kicker"><MapPin size={15} /> 最初に向かう企画 {isFallbackResult && <span>公式データから提案</span>}</div>
+            <h1>{result.mission.target_spot}</h1>
+            <div className="destination-location">
+              <strong>{missionSpot?.location || "公式案内で場所を確認"}</strong>
+              {missionSpot && <span>{missionSpot.category}</span>}
+            </div>
+            {missionSpot && (missionSpot.schedule || missionSpot.price || missionSpot.capacity || missionSpot.notice) && (
+              <dl className="project-conditions">
+                {missionSpot.schedule && <div><dt>時間</dt><dd>{missionSpot.schedule}</dd></div>}
+                {missionSpot.price && <div><dt>料金</dt><dd>{missionSpot.price}</dd></div>}
+                {missionSpot.capacity && <div><dt>定員</dt><dd>{missionSpot.capacity}</dd></div>}
+                {missionSpot.notice && <div><dt>案内</dt><dd>{missionSpot.notice}</dd></div>}
+              </dl>
+            )}
+            <div className="destination-mission"><small>ここでやること</small><strong>{result.mission.title}</strong><p>{result.mission.description}</p></div>
+            <div className="route-map" aria-label={`AIおみくじブース S103から${missionSpot?.location || "目的地"}までのエリア案内`}>
+              <div className="route-map-heading"><span>AREA GUIDE</span><strong>S103から{destinationPoint.zone}へ</strong></div>
+              <div className="area-route">
+                <span className="area-node area-start"><i>1</i><small>現在地</small><strong>S103</strong></span>
+                <span className="area-arrow" aria-hidden="true"><ArrowRight size={20} /></span>
+                <span className="area-node area-goal"><i>2</i><small>移動先</small><strong>{destinationPoint.zone}</strong></span>
+              </div>
+              <p><MapPin size={13} /> {missionSpot?.location || "公式案内で場所を確認してください"}</p>
+              <small className="map-disclaimer">会場内のエリア案内です。通路は現地の表示をご確認ください。</small>
+            </div>
+            <a className="official-project-button" href="https://ku-bdsfes.pages.dev/projects" rel="noreferrer" target="_blank">公式の企画情報を確認する</a>
+          </article>
           <div className="result-heading">
             <Image alt="" className="result-sparkle" height={80} src="/sparkle-clean.png" unoptimized width={80} />
             <div className="eyebrow"><Sparkles size={14} /> YOUR FESTIVAL FORTUNE</div>
@@ -599,30 +704,9 @@ export default function OmikujiExperience() {
           <blockquote>{result.message}</blockquote>
           <div className="result-grid">
             <article className={`mission-block ${missionComplete ? "mission-complete" : ""}`}>
-              <div className="block-label"><span>MISSION</span> 今日の小さな冒険</div>
+              <div className="block-label"><span>MISSION</span> 到着したら</div>
               <h2>{result.mission.title}</h2>
               <p>{result.mission.description}</p>
-              <div className="spot-strip">
-                <MapPin size={22} />
-                <div>
-                  <small>おすすめスポット</small><strong>{result.mission.target_spot}</strong>
-                  {missionSpot && <span>{missionSpot.location} · {missionSpot.category}</span>}
-                  <a href="https://ku-bdsfes.pages.dev/projects" rel="noreferrer" target="_blank">公式の企画・模擬店一覧を確認</a>
-                </div>
-              </div>
-              <div className="route-map" aria-label={`AIおみくじブース S103から${missionSpot?.location || "目的地"}までの簡易案内`}>
-                <div className="route-map-heading"><span>ROUTE</span><strong>会場を巡ろう</strong></div>
-                <div className="route-canvas">
-                  <span className="map-grid-line map-grid-line-one" />
-                  <span className="map-grid-line map-grid-line-two" />
-                  <svg aria-hidden="true" className="route-line" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <path d={`M 50 66 Q 50 42 ${destinationPoint.x} ${destinationPoint.y}`} pathLength="1" />
-                  </svg>
-                  <span className="route-point route-start" style={{ left: "50%", top: "66%" }}><i />AIおみくじ<br />S103</span>
-                  <span className="route-point route-goal" style={{ left: `${destinationPoint.x}%`, top: `${destinationPoint.y}%` }}><i />目的地<br />{destinationPoint.zone}</span>
-                </div>
-                <p><MapPin size={13} /> {missionSpot?.location || "公式案内で場所を確認してください"}</p>
-              </div>
               <button
                 aria-pressed={missionComplete}
                 className="mission-button"
@@ -774,7 +858,10 @@ export default function OmikujiExperience() {
               )}
             </div>
           </details>
-          <button className="redraw-button" onClick={reset} type="button"><RefreshCw size={18} /> もう一度引く</button>
+          <div className="result-actions">
+            <button className="same-conditions-button" disabled={isLoading} onClick={requestFortune} type="button"><RefreshCw size={18} /> 同じ条件で別の企画</button>
+            <button className="redraw-button" onClick={reset} type="button"><ArrowLeft size={18} /> 回答を変更する</button>
+          </div>
         </section>
       )}
       {toast && <div aria-live="polite" className="toast" role="status">{toast}</div>}

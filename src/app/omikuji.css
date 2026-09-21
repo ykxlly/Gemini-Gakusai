@@ -100,6 +100,18 @@ button, label, select { -webkit-tap-highlight-color: transparent; }
 .form-heading h2 { margin: 0; font-family: "Yu Mincho", serif; font-size: 21px; }
 .form-progress { height: 3px; margin: 0 0 30px; background: var(--line); overflow: hidden; }
 .form-progress-fill { height: 100%; background: var(--red); transition: width .4s cubic-bezier(.22, 1, .36, 1); }
+.form-step-tabs { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 14px; }
+.form-step-tabs button { min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-right: 1px solid var(--line); background: transparent; color: #777166; font-size: 10px; cursor: pointer; }
+.form-step-tabs button:last-child { border-right: 0; }
+.form-step-tabs button:disabled { opacity: .38; cursor: not-allowed; }
+.form-step-tabs button span { width: 19px; height: 19px; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: 9px; }
+.form-step-tabs .form-step-current { background: #fff8f3; color: var(--red); font-weight: 800; }
+.form-step-panel { min-height: 235px; animation: form-step-in .3s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes form-step-in { from { opacity: 0; transform: translateX(12px); } }
+.advanced-options { margin: -5px 0 28px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.advanced-options summary { padding: 14px 2px; font-size: 11px; font-weight: 800; cursor: pointer; }
+.advanced-options summary span { color: #898478; font-size: 9px; font-weight: 500; }
+.advanced-options .form-section { margin: 2px 0 18px; }
 .form-section { margin: 0 0 30px; padding: 0; border: 0; }
 .form-section legend, .select-label { display: block; margin-bottom: 12px; font-size: 13px; font-weight: 800; }
 .select-label span { margin-left: 6px; color: #898478; font-size: 10px; font-weight: 500; }
@@ -131,8 +143,9 @@ button, label, select { -webkit-tap-highlight-color: transparent; }
 select { width: 100%; height: 45px; padding: 0 13px; border: 1px solid var(--line); border-radius: 0; background: rgba(255,255,255,.55); color: var(--ink); outline: none; transition: box-shadow .2s ease; }
 select:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(216, 58, 46, .18); }
 .error-message { margin: -10px 0 20px; color: #b32920; font-size: 12px; }
-.draw-dock { width: 100%; }
+.draw-dock { width: 100%; display: flex; gap: 10px; align-items: stretch; }
 .draw-button { width: 100%; min-height: 55px; display: flex; justify-content: center; align-items: center; gap: 10px; border: 0; background: var(--red); color: white; font-weight: 800; cursor: pointer; box-shadow: 6px 6px 0 var(--ink); transition: transform .15s, box-shadow .15s; }
+.step-back-button { flex: 0 0 84px; min-height: 55px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid var(--line); background: transparent; color: #5f5b51; font-size: 11px; cursor: pointer; }
 .draw-button:hover:not(:disabled) { transform: translate(2px, 2px); box-shadow: 4px 4px 0 var(--ink); }
 .draw-button:disabled { background: #aaa59a; cursor: not-allowed; box-shadow: 5px 5px 0 #d1ccbf; }
 .button-punch { animation: button-punch .38s cubic-bezier(.36, .07, .19, .97) both; }
@@ -150,6 +163,22 @@ select:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(216, 58, 46,
 @keyframes reveal { from { opacity: 0; transform: translateY(12px); } }
 .result-leaving { opacity: 0; transform: translateY(-14px); }
 .back-button, .redraw-button { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; color: #5f5b51; font-size: 12px; cursor: pointer; }
+.destination-hero { margin: 18px 0 22px; padding: 22px; border: 2px solid var(--ink); background: #fffdf8; box-shadow: 6px 6px 0 var(--yellow); animation: result-rise .5s ease both; }
+.destination-kicker { display: flex; align-items: center; gap: 7px; color: var(--red); font-size: 10px; font-weight: 900; letter-spacing: .08em; }
+.destination-kicker > span { margin-left: auto; padding: 4px 7px; background: var(--yellow); color: var(--ink); font-size: 8px; letter-spacing: 0; }
+.destination-hero > h1 { margin: 13px 0 9px; font-family: "Yu Mincho", serif; font-size: clamp(25px, 7vw, 34px); line-height: 1.35; overflow-wrap: anywhere; }
+.destination-location { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.destination-location strong { color: var(--green); font-size: 15px; }
+.destination-location span { padding: 4px 7px; background: #e8f1e9; color: #557266; font-size: 9px; font-weight: 700; }
+.project-conditions { margin: 15px 0 0; display: flex; flex-wrap: wrap; gap: 7px; }
+.project-conditions > div { display: flex; border: 1px solid #e0c980; background: #fff8d9; font-size: 10px; }
+.project-conditions dt { padding: 5px 7px; background: var(--yellow); font-weight: 900; }
+.project-conditions dd { margin: 0; padding: 5px 8px; }
+.destination-mission { margin-top: 18px; padding: 15px 16px; border-left: 4px solid var(--red); background: #fff7f1; }
+.destination-mission small, .destination-mission strong { display: block; }
+.destination-mission small { color: #80796d; font-size: 9px; font-weight: 800; }
+.destination-mission strong { margin-top: 5px; font-family: "Yu Mincho", serif; font-size: 18px; }
+.destination-mission p { margin: 7px 0 0; color: #5f5b51; font-size: 12px; line-height: 1.7; }
 .result-heading { position: relative; margin: 22px 0 22px; padding: 34px 22px 32px; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); background: rgba(255, 253, 248, .46); text-align: center; transform-origin: center top; overflow: hidden; animation: paper-open .72s cubic-bezier(.16, 1, .3, 1) both; }
 .result-heading::before {
   content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
@@ -211,6 +240,17 @@ blockquote { margin: 0 auto 44px; max-width: 760px; font-family: "Yu Mincho", se
 .route-goal { animation: route-goal-in .45s 1.45s cubic-bezier(.34, 1.56, .64, 1) both; }
 .route-goal i { background: var(--red); box-shadow: 0 0 0 1px var(--red), 0 0 0 0 rgba(216,58,46,.35); animation: route-pulse 1.8s 1.7s ease-out infinite; }
 .route-map > p { margin: 10px 0 0; display: flex; align-items: center; gap: 5px; color: #557266; font-size: 10px; font-weight: 700; }
+.area-route { margin-top: 12px; display: grid; grid-template-columns: 1fr 34px 1fr; align-items: center; }
+.area-node { min-height: 66px; padding: 8px; display: grid; grid-template-columns: 25px 1fr; grid-template-rows: auto auto; align-items: center; border: 1px solid #bfd0c5; background: white; }
+.area-node i { grid-row: 1 / 3; width: 23px; height: 23px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: white; font-size: 10px; font-style: normal; }
+.area-node small { color: #898478; font-size: 8px; }
+.area-node strong { font-size: 11px; overflow-wrap: anywhere; }
+.area-goal { border-color: var(--red); animation: route-goal-in .45s .45s cubic-bezier(.34, 1.56, .64, 1) both; }
+.area-goal i { background: var(--red); }
+.area-arrow { display: grid; place-items: center; color: var(--red); animation: area-arrow-move 1.3s ease-in-out infinite; }
+.map-disclaimer { display: block; margin-top: 6px; color: #898478; font-size: 8px; line-height: 1.5; }
+.official-project-button { min-height: 42px; margin-top: 13px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--green); color: var(--green); font-size: 11px; font-weight: 800; text-decoration: none; }
+@keyframes area-arrow-move { 50% { transform: translateX(3px); } }
 @keyframes route-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes route-goal-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.4); } }
 @keyframes route-pulse { 50% { box-shadow: 0 0 0 1px var(--red), 0 0 0 8px rgba(216,58,46,0); } }
@@ -249,7 +289,11 @@ blockquote { margin: 0 auto 44px; max-width: 760px; font-family: "Yu Mincho", se
 .action-tip { margin-top: 18px; padding: 18px 20px; display: flex; align-items: center; gap: 12px; background: var(--yellow); animation: result-rise .55s .82s ease both; }
 .action-tip small { font-size: 9px; font-weight: 800; }
 .action-tip p { margin: 3px 0 0; font-family: "Yu Mincho", serif; font-size: 14px; font-weight: 700; }
-.redraw-button { margin: 30px auto 0; display: flex; color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+.result-actions { margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.same-conditions-button, .redraw-button { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 11px; font-weight: 800; cursor: pointer; }
+.same-conditions-button { border: 0; background: var(--red); color: white; box-shadow: 4px 4px 0 var(--ink); }
+.same-conditions-button:disabled { opacity: .5; }
+.redraw-button { margin: 0; border: 1px solid var(--ink); color: var(--ink); text-decoration: none; }
 .drawing-overlay { position: fixed; inset: 0; z-index: 20; display: grid; place-content: center; justify-items: center; padding: 24px; background: rgba(247, 244, 235, .94); text-align: center; animation: overlay-in .22s ease both; }
 .drawing-scene { position: relative; width: min(390px, 88vw); height: 230px; overflow: hidden; border-bottom: 1px solid var(--ink); animation: drawing-windup 1.4s cubic-bezier(.22, 1, .36, 1) both; }
 .drawing-mascot { position: absolute; width: 100%; height: auto; left: 50%; bottom: -9%; animation: mascot-draw 1.05s ease-in-out infinite; }
