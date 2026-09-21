@@ -62,6 +62,16 @@ function isText(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function isValidOmikujiResult(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== "object") return false;
+  const result = value as Record<string, unknown>;
+  const mission = result.mission as Record<string, unknown> | undefined;
+  const lucky = result.lucky_elements as Record<string, unknown> | undefined;
+  return isText(result.fortune_name) && isText(result.message) && isText(result.action_tip) && typeof result.compatibility_note === "string"
+    && !!mission && isText(mission.title) && isText(mission.target_spot) && isText(mission.description) && isText(mission.riddle) && isText(mission.riddle_answer)
+    && !!lucky && isText(lucky.color) && isText(lucky.food) && isText(lucky.spot);
+}
+
 export async function POST(request: Request) {
   const ai = getGenAI();
 
@@ -121,7 +131,7 @@ lucky_elements.spot も上記企画名から選んでください。responseSche
   try {
     const response = await generateWithAIFallback({
       gemini: ai,
-      groqMessages: [{ role: "user", content: `${prompt}\nJSONだけを返してください。` }],
+      groqMessages: [{ role: "user", content: `${prompt}\n次のキーを省略せず、JSONだけを返してください。{ "fortune_name":"", "message":"", "action_tip":"", "compatibility_note":"", "mission":{ "title":"", "target_spot":"", "description":"", "riddle":"", "riddle_answer":"" }, "lucky_elements":{ "color":"", "food":"", "spot":"" } }` }],
       json: true,
       geminiRequest: {
       model: "gemini-3.6-flash",
@@ -133,7 +143,9 @@ lucky_elements.spot も上記企画名から選んでください。responseSche
       },
     });
 
-    return NextResponse.json(JSON.parse(response.text));
+    const result = JSON.parse(response.text) as unknown;
+    if (!isValidOmikujiResult(result)) throw new Error("AI response did not match the omikuji result format.");
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Failed to generate omikuji:", error);
     return NextResponse.json({ error: "Failed to generate omikuji." }, { status: 502 });
