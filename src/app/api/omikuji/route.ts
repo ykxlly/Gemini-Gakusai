@@ -91,7 +91,7 @@ export async function POST(request: Request) {
   }
 
   const spotContext = spots
-    .map((spot) => `- ${spot.name} (${spot.category} / ${spot.location}): ${spot.vibe}`)
+    .map((spot) => `- ${spot.name}\n  分類: ${spot.category}\n  場所: ${spot.location}\n  内容: ${spot.vibe}`)
     .join("\n");
 
   const partnerContext =
@@ -110,10 +110,13 @@ export async function POST(request: Request) {
 
 ${partnerContext}
 
-学園祭スポット:
+BDSF 2026の出店企画（2026年9月21日時点の公式掲載情報）:
 ${spotContext}
 
-上のスポットから最適な1件を mission.target_spot に選び、楽しいミッションを作成してください。mission.riddle には運勢やミッションに関連した簡単ななぞなぞ（一言で答えられるもの）を、mission.riddle_answer にはその想定解答を入れてください。lucky_elements.spot も上記スポット名から選んでください。responseSchema に完全準拠する JSON のみを返してください。`;
+上の企画から来場者の気分・目的・同行者に合う1件を mission.target_spot に選び、その企画で無理なく実行できる楽しいミッションを作成してください。
+存在しない企画、場所、商品、特典、開催時刻を作らないでください。時刻が関係する企画や「後日掲載」の場所は、現地の公式案内を確認するよう促してください。
+アルコールを飲むミッションは作らないでください。mission.riddle には運勢やミッションに関連した簡単ななぞなぞ（一言で答えられるもの）を、mission.riddle_answer にはその想定解答を入れてください。
+lucky_elements.spot も上記企画名から選んでください。responseSchema に完全準拠する JSON のみを返してください。`;
 
   try {
     const response = await generateContentWithFallback(ai, {

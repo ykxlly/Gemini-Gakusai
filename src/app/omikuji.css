@@ -187,6 +187,7 @@ blockquote { margin: 0 auto 44px; max-width: 760px; font-family: "Yu Mincho", se
 .spot-strip small { font-size: 9px; }
 .spot-strip strong { margin: 2px 0; font-size: 13px; }
 .spot-strip span { color: #557266; font-size: 9px; }
+.spot-strip a { display: inline-block; margin-top: 7px; color: var(--green); font-size: 10px; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 .mission-button { width: 100%; min-height: 42px; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--green); background: transparent; color: var(--green); font-size: 12px; font-weight: 800; cursor: pointer; transition: background .18s, color .18s, transform .18s; }
 .mission-button:hover { background: var(--green); color: white; }
 .mission-button:active { transform: scale(.98); }

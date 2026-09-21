@@ -418,7 +418,7 @@ export default function OmikujiExperience() {
           <span className="brand-mark"><Image alt="" height={38} priority src="/sparkle-clean.png" unoptimized width={38} /></span>
           <span>超パーソナル<br /><strong>AIおみくじ</strong></span>
         </a>
-        <span className="festival-tag">文化祭 2026</span>
+        <span className="festival-tag">BDSF 2026</span>
       </header>
 
       {!result ? (
@@ -426,7 +426,7 @@ export default function OmikujiExperience() {
           <section className="intro-panel">
             <div className="eyebrow"><Star size={14} fill="currentColor" /> FESTIVAL FORTUNE</div>
             <h1>今日のあなたに、<br /><em>最高の寄り道</em>を。</h1>
-            <p>いまの気分を選ぶだけ。AIが学園祭のスポットから、あなただけの運勢と小さなミッションを届けます。</p>
+            <p>いまの気分を選ぶだけ。AIがBDSF 2026の出店企画から、あなただけの運勢と小さなミッションを届けます。</p>
             <div className={`mascot-stage mascot-progress-${selectionCount}`}>
               <div className="booth-sign" aria-hidden="true">AI FORTUNE BOOTH <span>01</span></div>
               <div className="mascot-visual">
@@ -538,6 +538,7 @@ export default function OmikujiExperience() {
                 <div>
                   <small>おすすめスポット</small><strong>{result.mission.target_spot}</strong>
                   {missionSpot && <span>{missionSpot.location} · {missionSpot.category}</span>}
+                  <a href="https://ku-bdsfes.pages.dev/projects" rel="noreferrer" target="_blank">公式の企画・模擬店一覧を確認</a>
                 </div>
               </div>
               <button
