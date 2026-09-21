@@ -2,7 +2,7 @@
 
 import { ArrowLeft, ArrowRight, BookOpen, Camera, Check, CircleCheckBig, HelpCircle, MapPin, MessageCircle, RefreshCw, Send, Sparkles, Star, Utensils, Volume2, Wand2 } from "lucide-react";
 import Image from "next/image";
-import { FormEvent, useEffect, useState, type ChangeEvent, type CSSProperties } from "react";
+import { FormEvent, useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from "react";
 import { flushSync } from "react-dom";
 import spots from "@/data/spots.json";
 
@@ -50,6 +50,25 @@ const stampParticles = Array.from({ length: 6 }, (_, index) => {
   const angle = (index / 6) * Math.PI * 2;
   return { dx: Math.round(Math.cos(angle) * 34), dy: Math.round(Math.sin(angle) * 34) };
 });
+
+const locationPoints: Record<string, { x: number; y: number; zone: string }> = {
+  "S102": { x: 73, y: 30, zone: "1階" },
+  "S106": { x: 76, y: 62, zone: "1階" },
+  "エントランス": { x: 48, y: 82, zone: "1階" },
+  "ホール（S201）": { x: 25, y: 26, zone: "2階" },
+  "S203": { x: 51, y: 27, zone: "2階" },
+  "S204": { x: 73, y: 27, zone: "2階" },
+  "2階エレベーター前スペース": { x: 50, y: 51, zone: "2階" },
+  "中庭（東側）": { x: 72, y: 74, zone: "屋外" },
+  "中庭（西側）": { x: 28, y: 74, zone: "屋外" },
+  "グラウンド": { x: 14, y: 48, zone: "屋外" },
+  "キャンパス祭入口・食堂": { x: 38, y: 57, zone: "食堂周辺" },
+  "食堂": { x: 40, y: 48, zone: "食堂" },
+};
+
+function getLocationPoint(location: string | undefined) {
+  return (location && locationPoints[location]) || { x: 82, y: 50, zone: "公式案内を確認" };
+}
 
 function withViewTransition(update: () => void) {
   const doc = document as Document & { startViewTransition?: (callback: () => void) => void };
@@ -127,6 +146,9 @@ export default function OmikujiExperience() {
   const [summaryText, setSummaryText] = useState("");
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [toast, setToast] = useState("");
+  const [rouletteSpot, setRouletteSpot] = useState(spots[0].name);
+  const [selectionReaction, setSelectionReaction] = useState<{ message: string; motion: string; key: number } | null>(null);
+  const reactionTimer = useRef<number | null>(null);
 
   function showToast(message: string) {
     setToast(message);
@@ -135,8 +157,32 @@ export default function OmikujiExperience() {
 
   const canSubmit = Boolean(mood && goal && companion && !isLoading);
   const selectionCount = [mood, goal, companion].filter(Boolean).length;
-  const mascotMessage = selectionCount === 3 ? "準備OK！運勢を引こう" : selectionCount ? `あと${3 - selectionCount}つ教えてね` : "一緒に運勢を探そう";
+  const mascotMessage = selectionReaction?.message || (selectionCount === 3 ? "準備OK！運勢を引こう" : selectionCount ? `あと${3 - selectionCount}つ教えてね` : "一緒に運勢を探そう");
   const missionSpot = result ? spots.find((spot) => spot.name === result.mission.target_spot) : undefined;
+  const destinationPoint = getLocationPoint(missionSpot?.location);
+
+  function reactToSelection(message: string, motion: string) {
+    if (reactionTimer.current) window.clearTimeout(reactionTimer.current);
+    setSelectionReaction({ message, motion, key: Date.now() });
+    reactionTimer.current = window.setTimeout(() => setSelectionReaction(null), 1100);
+  }
+
+  function celebrateMission() {
+    if (missionComplete) {
+      setMissionComplete(false);
+      return;
+    }
+    setMissionComplete(true);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    setConfetti(Array.from({ length: 28 }, (_, index) => ({
+      id: Date.now() + index,
+      left: 18 + Math.random() * 64,
+      color: confettiColors[index % confettiColors.length],
+      delay: Math.random() * 0.3,
+      duration: 1.4 + Math.random() * 0.8,
+    })));
+    window.setTimeout(() => setConfetti([]), 2600);
+  }
 
   useEffect(() => {
     if (!isLoading) {
@@ -150,10 +196,29 @@ export default function OmikujiExperience() {
   }, [isLoading]);
 
   useEffect(() => {
+    if (!isLoading) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setRouletteSpot("あなたに合う企画を選んでいます");
+      return;
+    }
+    let index = Math.floor(Math.random() * spots.length);
+    const timer = window.setInterval(() => {
+      index = (index + 1 + Math.floor(Math.random() * 5)) % spots.length;
+      setRouletteSpot(spots[index].name);
+    }, 90);
+    return () => window.clearInterval(timer);
+  }, [isLoading]);
+
+  useEffect(() => () => {
+    if (reactionTimer.current) window.clearTimeout(reactionTimer.current);
+  }, []);
+
+  useEffect(() => {
     if (!result) {
       setConfetti([]);
       return;
     }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const isBigLuck = result.fortune_name.includes("大吉");
     const count = isBigLuck ? 36 : 16;
     setConfetti(
@@ -242,6 +307,10 @@ export default function OmikujiExperience() {
       ]);
       if (!response.ok) throw new Error("おみくじを引けませんでした。少し待って、もう一度お試しください。");
       const data = (await response.json()) as Result;
+      setRouletteSpot(data.mission.target_spot);
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        await new Promise((resolve) => window.setTimeout(resolve, 620));
+      }
       withViewTransition(() => setResult(data));
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (requestError) {
@@ -355,7 +424,7 @@ export default function OmikujiExperience() {
       if (!response.ok) throw new Error("写真の確認に失敗しました。");
       const data = (await response.json()) as { verified: boolean; comment: string };
       setVerifyResult(data);
-      if (data.verified) setMissionComplete(true);
+      if (data.verified && !missionComplete) celebrateMission();
     } catch (verifyRequestError) {
       showToast(verifyRequestError instanceof Error ? verifyRequestError.message : "通信エラーが発生しました。");
     } finally {
@@ -427,7 +496,7 @@ export default function OmikujiExperience() {
             <div className="eyebrow"><Star size={14} fill="currentColor" /> FESTIVAL FORTUNE</div>
             <h1>今日のあなたに、<br /><em>最高の寄り道</em>を。</h1>
             <p>いまの気分を選ぶだけ。AIがBDSF 2026の出店企画から、あなただけの運勢と小さなミッションを届けます。</p>
-            <div className={`mascot-stage mascot-progress-${selectionCount}`}>
+            <div className={`mascot-stage mascot-progress-${selectionCount} ${selectionReaction ? `mascot-${selectionReaction.motion}` : ""}`}>
               <div className="booth-sign" aria-hidden="true">AI FORTUNE BOOTH <span>01</span></div>
               <div className="mascot-visual">
                 <Image
@@ -453,7 +522,7 @@ export default function OmikujiExperience() {
               </div>
               <Image alt="" className="stage-sparkle stage-sparkle-large" height={78} src="/sparkle-clean.png" unoptimized width={78} />
               <Image alt="" className="stage-sparkle stage-sparkle-small" height={38} src="/sparkle-clean.png" unoptimized width={38} />
-              <span className="mascot-caption" aria-live="polite">{mascotMessage}</span>
+              <span className="mascot-caption" aria-live="polite" key={selectionReaction?.key || "idle"}>{mascotMessage}</span>
             </div>
             <div className="privacy-note"><Check size={16} /> 入力内容は AI おみくじの生成に使用されます</div>
           </section>
@@ -467,14 +536,14 @@ export default function OmikujiExperience() {
               <div className="form-progress-fill" style={{ width: `${(selectionCount / 3) * 100}%` }} />
             </div>
             <form onSubmit={draw}>
-              <ChoiceField legend="今の気分は？" name="mood" choices={moods} value={mood} onChange={setMood} />
-              <ChoiceField legend="今日の目的は？" name="goal" choices={goals} value={goal} onChange={setGoal} />
+              <ChoiceField legend="今の気分は？" name="mood" choices={moods} value={mood} onChange={(value) => { setMood(value); reactToSelection(`${value}な気分、受け取ったよ！`, "tilt-left"); }} />
+              <ChoiceField legend="今日の目的は？" name="goal" choices={goals} value={goal} onChange={(value) => { setGoal(value); reactToSelection(`${value}にぴったりの企画を探すね`, "tilt-right"); }} />
               <fieldset className="form-section">
                 <legend>誰と来た？</legend>
                 <div className="segment-control">
                   {companions.map((choice) => (
                     <label key={choice} className={companion === choice ? "segment-selected" : ""}>
-                      <input checked={companion === choice} name="companion" onChange={() => setCompanion(choice)} type="radio" />
+                      <input checked={companion === choice} name="companion" onChange={() => { setCompanion(choice); reactToSelection(`${choice}で楽しめる寄り道にしよう！`, "bounce"); }} type="radio" />
                       {choice}
                     </label>
                   ))}
@@ -541,10 +610,23 @@ export default function OmikujiExperience() {
                   <a href="https://ku-bdsfes.pages.dev/projects" rel="noreferrer" target="_blank">公式の企画・模擬店一覧を確認</a>
                 </div>
               </div>
+              <div className="route-map" aria-label={`AIおみくじブース S103から${missionSpot?.location || "目的地"}までの簡易案内`}>
+                <div className="route-map-heading"><span>ROUTE</span><strong>会場を巡ろう</strong></div>
+                <div className="route-canvas">
+                  <span className="map-grid-line map-grid-line-one" />
+                  <span className="map-grid-line map-grid-line-two" />
+                  <svg aria-hidden="true" className="route-line" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <path d={`M 50 66 Q 50 42 ${destinationPoint.x} ${destinationPoint.y}`} pathLength="1" />
+                  </svg>
+                  <span className="route-point route-start" style={{ left: "50%", top: "66%" }}><i />AIおみくじ<br />S103</span>
+                  <span className="route-point route-goal" style={{ left: `${destinationPoint.x}%`, top: `${destinationPoint.y}%` }}><i />目的地<br />{destinationPoint.zone}</span>
+                </div>
+                <p><MapPin size={13} /> {missionSpot?.location || "公式案内で場所を確認してください"}</p>
+              </div>
               <button
                 aria-pressed={missionComplete}
                 className="mission-button"
-                onClick={() => setMissionComplete((complete) => !complete)}
+                onClick={celebrateMission}
                 type="button"
               >
                 <CircleCheckBig size={18} /> {missionComplete ? "ミッション達成！" : "達成した！"}
@@ -642,15 +724,17 @@ export default function OmikujiExperience() {
             </div>
             {narrationUrl && <audio autoPlay className="narration-player" controls src={narrationUrl} />}
             {card && (
-              <div
-                aria-live="polite"
-                className="omamori-card"
-                style={isValidHex(card.accentHex) ? ({ "--accent": card.accentHex } as CSSProperties) : undefined}
-              >
-                <span className="omamori-seal">御守</span>
-                <strong>{result.fortune_name}</strong>
-                <p>{card.phrase}</p>
-                <small>{result.mission.target_spot}</small>
+              <div className="card-opening" aria-live="polite">
+                <div className="card-envelope" aria-hidden="true"><span className="envelope-back" /><span className="envelope-flap" /></div>
+                <div
+                  className="omamori-card"
+                  style={isValidHex(card.accentHex) ? ({ "--accent": card.accentHex } as CSSProperties) : undefined}
+                >
+                  <span className="omamori-seal">御守</span>
+                  <strong>{result.fortune_name}</strong>
+                  <p>{card.phrase}</p>
+                  <small>{result.mission.target_spot}</small>
+                </div>
               </div>
             )}
             <div aria-live="polite" className="ai-panel chat-panel">
@@ -717,6 +801,10 @@ export default function OmikujiExperience() {
             />
           </div>
           <strong>運勢を読み解いています</strong>
+          <div className="project-roulette" aria-hidden="true">
+            <small>NEXT PROJECT</small>
+            <span key={rouletteSpot}>{rouletteSpot}</span>
+          </div>
           <span className="loading-message" key={loadingMessageIndex}>{loadingMessages[loadingMessageIndex]}</span>
         </div>
       )}

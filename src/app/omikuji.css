@@ -59,6 +59,10 @@ button, label, select { -webkit-tap-highlight-color: transparent; }
 .mascot-progress-3 .mascot-visual { animation: mascot-ready 1.1s cubic-bezier(.34, 1.56, .64, 1) infinite; }
 .mascot-progress-3 .mascot-caption { background: var(--red); animation: caption-ready .45s cubic-bezier(.34, 1.56, .64, 1) both; }
 .mascot-progress-3 .stage-sparkle { animation-duration: 1.2s; }
+.mascot-tilt-left .mascot-visual { animation: mascot-choice-left .7s cubic-bezier(.34, 1.56, .64, 1) both; }
+.mascot-tilt-right .mascot-visual { animation: mascot-choice-right .7s cubic-bezier(.34, 1.56, .64, 1) both; }
+.mascot-bounce .mascot-visual { animation: mascot-choice-bounce .75s cubic-bezier(.34, 1.56, .64, 1) both; }
+.mascot-tilt-left .mascot-caption, .mascot-tilt-right .mascot-caption, .mascot-bounce .mascot-caption { animation: reaction-bubble .45s cubic-bezier(.34, 1.56, .64, 1) both; background: var(--green); }
 @keyframes sparkle-pulse {
   0%, 100% { transform: scale(1) rotate(0); opacity: 1; }
   50% { transform: scale(.9) rotate(8deg); opacity: .88; }
@@ -82,6 +86,10 @@ button, label, select { -webkit-tap-highlight-color: transparent; }
   50% { transform: translateX(-50%) translateY(-10px) scale(1.025); }
 }
 @keyframes caption-ready { from { opacity: 0; transform: translateY(6px) scale(.94); } }
+@keyframes mascot-choice-left { 0% { transform: translateX(-50%); } 35% { transform: translateX(-50%) translateY(-9px) rotate(-3deg) scale(1.025); } 100% { transform: translateX(-50%); } }
+@keyframes mascot-choice-right { 0% { transform: translateX(-50%); } 35% { transform: translateX(-50%) translateY(-9px) rotate(3deg) scale(1.025); } 100% { transform: translateX(-50%); } }
+@keyframes mascot-choice-bounce { 0% { transform: translateX(-50%); } 35% { transform: translateX(-50%) translateY(-14px) scale(1.03); } 60% { transform: translateX(-50%) translateY(2px) scale(.99); } 100% { transform: translateX(-50%); } }
+@keyframes reaction-bubble { from { opacity: 0; transform: translateY(7px) scale(.88); } }
 .privacy-note { display: flex; align-items: center; gap: 8px; color: #676257; font-size: 11px; }
 .privacy-note svg { color: var(--green); }
 
@@ -188,10 +196,29 @@ blockquote { margin: 0 auto 44px; max-width: 760px; font-family: "Yu Mincho", se
 .spot-strip strong { margin: 2px 0; font-size: 13px; }
 .spot-strip span { color: #557266; font-size: 9px; }
 .spot-strip a { display: inline-block; margin-top: 7px; color: var(--green); font-size: 10px; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.route-map { margin-top: 14px; padding: 14px; border: 1px solid var(--line); background: #f8f5ec; }
+.route-map-heading { display: flex; align-items: baseline; gap: 8px; font-size: 10px; }
+.route-map-heading span { padding: 3px 6px; background: var(--green); color: white; font-size: 8px; font-weight: 800; letter-spacing: .12em; }
+.route-map-heading strong { font-family: "Yu Mincho", serif; }
+.route-canvas { position: relative; height: 136px; margin-top: 10px; overflow: hidden; border: 1px solid #c9d4c9; background-color: #edf2e9; background-image: linear-gradient(rgba(23,107,87,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(23,107,87,.07) 1px, transparent 1px); background-size: 20px 20px; }
+.route-canvas::before, .route-canvas::after { content: ""; position: absolute; background: rgba(255,255,255,.65); border: 1px solid rgba(23,107,87,.12); }
+.route-canvas::before { width: 25%; height: 35%; left: 8%; top: 10%; }
+.route-canvas::after { width: 22%; height: 25%; right: 7%; bottom: 9%; }
+.route-line { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.route-line path { fill: none; stroke: var(--red); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: .025 .045; vector-effect: non-scaling-stroke; animation: route-draw 1.2s .5s cubic-bezier(.22, 1, .36, 1) both; }
+.route-point { position: absolute; z-index: 2; width: 74px; color: #4c514a; font-size: 8px; font-weight: 800; line-height: 1.3; text-align: center; transform: translate(-50%, -50%); }
+.route-point i { width: 13px; height: 13px; margin: 0 auto 3px; display: block; border: 3px solid white; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.route-goal { animation: route-goal-in .45s 1.45s cubic-bezier(.34, 1.56, .64, 1) both; }
+.route-goal i { background: var(--red); box-shadow: 0 0 0 1px var(--red), 0 0 0 0 rgba(216,58,46,.35); animation: route-pulse 1.8s 1.7s ease-out infinite; }
+.route-map > p { margin: 10px 0 0; display: flex; align-items: center; gap: 5px; color: #557266; font-size: 10px; font-weight: 700; }
+@keyframes route-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes route-goal-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.4); } }
+@keyframes route-pulse { 50% { box-shadow: 0 0 0 1px var(--red), 0 0 0 8px rgba(216,58,46,0); } }
 .mission-button { width: 100%; min-height: 42px; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--green); background: transparent; color: var(--green); font-size: 12px; font-weight: 800; cursor: pointer; transition: background .18s, color .18s, transform .18s; }
 .mission-button:hover { background: var(--green); color: white; }
 .mission-button:active { transform: scale(.98); }
 .mission-complete .mission-button { background: var(--green); color: white; }
+.mission-complete::after { content: ""; position: absolute; z-index: 1; width: 150px; height: 150px; right: -18px; top: 6px; border-radius: 50%; background: radial-gradient(circle, rgba(242,200,75,.42), rgba(242,200,75,0) 68%); animation: achievement-glow .9s ease-out both; pointer-events: none; }
 .mission-complete h2 { max-width: calc(100% - 88px); }
 .mission-stamp { position: absolute; z-index: 2; right: 22px; top: 48px; width: 72px; height: 72px; display: grid; place-content: center; border: 3px double var(--red); border-radius: 50%; background: rgba(255, 253, 248, .88); color: var(--red); font-size: 8px; font-weight: 800; line-height: 1.05; text-align: center; transform: rotate(-10deg); animation: mission-stamp-in .5s cubic-bezier(.34, 1.56, .64, 1) both; }
 .mission-stamp strong { font-family: "Yu Mincho", serif; font-size: 21px; }
@@ -205,6 +232,7 @@ blockquote { margin: 0 auto 44px; max-width: 760px; font-family: "Yu Mincho", se
   65% { opacity: 1; transform: rotate(-8deg) scale(.88); filter: blur(0); }
   to { opacity: 1; transform: rotate(-10deg) scale(1); }
 }
+@keyframes achievement-glow { from { opacity: 0; transform: scale(.25); } 35% { opacity: 1; } to { opacity: 0; transform: scale(1.45); } }
 .lucky-block dl, .lucky-block dd { margin: 0; }
 .lucky-block dl > div { padding: 15px 0; border-bottom: 1px solid var(--line); opacity: 0; animation: result-rise .5s ease both; }
 .lucky-block dl > div:last-child { border-bottom: 0; }
@@ -238,6 +266,10 @@ blockquote { margin: 0 auto 44px; max-width: 760px; font-family: "Yu Mincho", se
 }
 .drawing-overlay strong { margin-top: 24px; font-family: "Yu Mincho", serif; font-size: 22px; }
 .drawing-overlay > span { margin-top: 7px; color: #706b60; font-size: 11px; }
+.project-roulette { width: min(340px, 82vw); min-height: 64px; margin-top: 16px; padding: 9px 14px; display: grid; place-content: center; border: 1px solid var(--ink); background: #fffdf8; box-shadow: 4px 4px 0 var(--yellow); }
+.project-roulette small { color: var(--red); font-size: 8px; font-weight: 900; letter-spacing: .16em; }
+.project-roulette span { margin-top: 4px; display: block; font-family: "Yu Mincho", serif; font-size: 13px; font-weight: 800; line-height: 1.45; animation: roulette-tick .09s ease both; }
+@keyframes roulette-tick { from { opacity: .25; transform: translateY(-5px); filter: blur(1px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
 .loading-message { animation: loading-message-in .35s ease both; }
 @keyframes loading-message-in { from { opacity: 0; transform: translateY(4px); } }
 .confetti-layer { position: fixed; inset: 0; z-index: 30; overflow: hidden; pointer-events: none; }
@@ -283,11 +315,22 @@ blockquote { margin: 0 auto 44px; max-width: 760px; font-family: "Yu Mincho", se
 .toast { position: fixed; left: 50%; bottom: 18px; z-index: 40; width: min(calc(100% - 32px), 420px); padding: 12px 16px; transform: translateX(-50%); background: var(--ink); color: white; font-size: 12px; text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,.25); animation: toast-in .25s ease both; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 10px); } }
 .narration-player { width: 100%; max-width: 420px; margin-top: 12px; }
-.omamori-card { position: relative; width: 100%; max-width: 220px; margin-top: 14px; padding: 28px 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; border: 2px solid var(--accent, var(--red)); border-radius: 4px; background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.7)); box-shadow: 4px 4px 0 var(--accent, var(--red)); }
+.card-opening { position: relative; width: 100%; max-width: 240px; height: 260px; margin-top: 14px; perspective: 800px; overflow: hidden; }
+.card-envelope { position: absolute; z-index: 3; left: 10px; right: 10px; bottom: 16px; height: 125px; animation: envelope-away .65s 1.25s ease-in both; }
+.envelope-back { position: absolute; inset: 0; border: 2px solid #b79b6c; background: #e8cf9c; box-shadow: 4px 4px 0 rgba(23,23,20,.18); }
+.envelope-back::before, .envelope-back::after { content: ""; position: absolute; bottom: 0; width: 58%; height: 82%; background: #f0ddb4; clip-path: polygon(0 100%, 100% 100%, 100% 0); }
+.envelope-back::before { left: 0; transform: scaleX(-1); }
+.envelope-back::after { right: 0; }
+.envelope-flap { position: absolute; z-index: 2; left: 0; right: 0; top: 0; height: 70%; background: #dabb80; clip-path: polygon(0 0, 100% 0, 50% 100%); transform-origin: top; animation: envelope-open .65s .2s cubic-bezier(.22, 1, .36, 1) both; }
+.card-opening .omamori-card { animation: card-rise 1s .55s cubic-bezier(.16, 1, .3, 1) both; }
+.omamori-card { position: relative; z-index: 2; width: calc(100% - 28px); max-width: 220px; margin: 0 auto; padding: 28px 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; border: 2px solid var(--accent, var(--red)); border-radius: 4px; background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.86)); box-shadow: 4px 4px 0 var(--accent, var(--red)); }
 .omamori-seal { position: absolute; top: -14px; padding: 4px 10px; border-radius: 999px; background: var(--accent, var(--red)); color: white; font-size: 10px; font-weight: 800; }
 .omamori-card strong { margin-top: 8px; font-family: "Yu Mincho", serif; font-size: 18px; color: var(--accent, var(--red)); }
 .omamori-card p { font-size: 12px; line-height: 1.8; color: #5f5b51; }
 .omamori-card small { color: #898478; font-size: 10px; }
+@keyframes envelope-open { from { transform: rotateX(0); } to { transform: rotateX(178deg); } }
+@keyframes envelope-away { to { opacity: 0; transform: translateY(34px); } }
+@keyframes card-rise { from { opacity: 0; transform: translateY(145px) scale(.88); } 45% { opacity: 1; } to { opacity: 1; transform: translateY(12px) scale(1); } }
 .riddle-box, .photo-box { margin-top: 18px; padding: 16px 18px; border: 1px dashed #9c968a; background: rgba(255,255,255,.4); }
 .riddle-box p, .photo-box p { margin: 0 0 10px; font-size: 12px; line-height: 1.7; }
 .riddle-box input[type="text"] { width: 100%; margin-bottom: 10px; padding: 9px 11px; border: 1px solid var(--line); background: rgba(255,255,255,.7); }
