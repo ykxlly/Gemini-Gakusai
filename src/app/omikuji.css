@@ -166,7 +166,7 @@ select:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(216, 58, 46,
 .destination-hero { margin: 18px 0 22px; padding: 22px; border: 2px solid var(--ink); background: #fffdf8; box-shadow: 6px 6px 0 var(--yellow); animation: result-rise .5s ease both; }
 .destination-kicker { display: flex; align-items: center; gap: 7px; color: var(--red); font-size: 10px; font-weight: 900; letter-spacing: .08em; }
 .destination-kicker > span { margin-left: auto; padding: 4px 7px; background: var(--yellow); color: var(--ink); font-size: 8px; letter-spacing: 0; }
-.destination-hero > h1 { margin: 13px 0 9px; font-family: "Yu Mincho", serif; font-size: clamp(25px, 7vw, 34px); line-height: 1.35; overflow-wrap: anywhere; }
+.destination-hero > h1 { margin: 13px 0 9px; font-family: "Yu Mincho", serif; font-size: clamp(25px, 7vw, 34px); line-height: 1.35; line-break: strict; overflow-wrap: break-word; word-break: normal; }
 .destination-location { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
 .destination-location strong { color: var(--green); font-size: 15px; }
 .destination-location span { padding: 4px 7px; background: #e8f1e9; color: #557266; font-size: 9px; font-weight: 700; }
@@ -187,7 +187,7 @@ select:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(216, 58, 46,
 }
 @keyframes heading-flash { from { opacity: 1; } to { opacity: 0; } }
 .result-heading > p { position: relative; z-index: 2; margin: 18px 0 5px; color: #6c675d; font-size: 12px; }
-.result-heading h1 { position: relative; z-index: 2; margin: 0 auto; max-width: 100%; color: var(--red); font-family: "Yu Mincho", serif; line-height: 1.18; text-wrap: balance; overflow-wrap: break-word; transform-origin: center top; }
+.result-heading h1 { position: relative; z-index: 2; margin: 0 auto; display: inline-flex; max-width: 100%; flex-wrap: nowrap; justify-content: center; color: var(--red); font-family: "Yu Mincho", serif; line-height: 1.18; white-space: nowrap; transform-origin: center top; }
 .fortune-char { display: inline-block; opacity: 0; animation: char-in .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(.16s + var(--i) * .045s); }
 @keyframes char-in { from { opacity: 0; transform: translateY(16px) rotate(4deg); } to { opacity: 1; transform: translateY(0) rotate(0); } }
 .fortune-name-short { font-size: 52px; }
@@ -438,9 +438,20 @@ footer span { margin: 0 6px; }
   .form-panel { padding: 48px 0 64px; }
   .draw-dock { position: fixed; z-index: 15; left: 16px; right: 16px; bottom: max(12px, env(safe-area-inset-bottom)); width: auto; padding: 8px; border: 1px solid rgba(23, 23, 20, .18); background: rgba(247, 244, 235, .9); backdrop-filter: blur(10px); }
   .draw-button { min-height: 52px; }
-  .fortune-name-short { font-size: 58px; }
-  .fortune-name-medium { font-size: 50px; }
-  .fortune-name-compact { font-size: 42px; }
+  .result-heading { padding-right: 48px; padding-left: 48px; }
+  .fortune-name-short { font-size: 42px; }
+  .fortune-name-medium { font-size: 35px; }
+  .fortune-name-compact { font-size: 28px; }
+  .result-seal { right: 8px; bottom: 8px; width: 44px; height: 44px; font-size: 7px; }
+  .result-seal svg { width: 13px; height: 13px; }
+  blockquote { text-align: left; }
+  .result-grid { grid-template-columns: 1fr; }
+  .mission-block { border-right: 0; border-bottom: 1px solid var(--ink); }
+  .lucky-block dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lucky-block dl > div { min-width: 0; padding: 8px 10px; border-right: 1px solid var(--line); border-bottom: 0; }
+  .lucky-block dl > div:first-child { padding-left: 0; }
+  .lucky-block dl > div:last-child { padding-right: 0; border-right: 0; }
+  .lucky-block dd { font-size: 12px; line-height: 1.5; line-break: strict; overflow-wrap: break-word; word-break: normal; }
   .back-button { position: sticky; top: 8px; z-index: 6; padding: 7px 12px; background: rgba(247, 244, 235, .92); backdrop-filter: blur(8px); }
 }
 
@@ -460,7 +471,7 @@ footer span { margin: 0 6px; }
   .result-heading > p { margin-top: 12px; }
   .fortune-name-short { font-size: 44px; }
   .fortune-name-medium { font-size: 38px; }
-  .fortune-name-compact { font-size: 32px; }
+  .fortune-name-compact { font-size: 29px; }
   .result-seal { right: 0; bottom: 8px; width: 42px; height: 42px; font-size: 7px; }
   .result-seal svg { width: 13px; height: 13px; }
   .result-sparkle { width: 40px; height: 40px; left: 0; top: 7px; }
