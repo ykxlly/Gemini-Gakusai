@@ -881,6 +881,7 @@ export default function OmikujiExperience() {
           </section>
 
           <section className="form-panel" aria-labelledby="form-title">
+            <div className="form-kicker"><span>御神籤授与所</span><strong>まずは一枚、授かろう</strong></div>
             <div className="form-heading">
               <span>{["一", "二", "三"][formStep]}</span>
               <div><p>{formStep < 2 ? `あと${2 - formStep}つ` : "最後のひとつ"} · ひとつ選ぶだけ</p><h2 id="form-title">{formStep === 0 ? "気分" : formStep === 1 ? "目的" : "同行者"}</h2></div>

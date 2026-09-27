@@ -32,7 +32,7 @@ button, label, select { -webkit-tap-highlight-color: transparent; }
 
 .input-layout { width: calc(100% - 32px); margin: 0 auto; display: grid; grid-template-columns: 1fr; min-height: calc(100vh - 122px); animation: input-return .45s cubic-bezier(.22, 1, .36, 1) both; }
 @keyframes input-return { from { opacity: 0; transform: translateY(12px); } }
-.intro-panel { position: relative; padding: 34px 0 26px; overflow: hidden; }
+.intro-panel { position: relative; order: 1; padding: 34px 0 26px; overflow: hidden; }
 .eyebrow { display: inline-flex; align-items: center; gap: 7px; color: var(--red); font-size: 11px; font-weight: 800; letter-spacing: .14em; }
 .intro-panel h1 { margin: 18px 0 16px; font-family: var(--font-display); font-size: 39px; line-height: 1.35; font-weight: 700; letter-spacing: .08em; text-wrap: balance; }
 .intro-panel h1 em { color: var(--red); font-style: normal; position: relative; }
@@ -98,7 +98,36 @@ button, label, select { -webkit-tap-highlight-color: transparent; }
 .privacy-note { display: flex; align-items: center; gap: 8px; color: #676257; font-size: 11px; }
 .privacy-note svg { color: var(--green); }
 
-.form-panel { padding: 28px 0 64px; }
+.form-panel {
+  order: -1;
+  margin: 18px 0 0;
+  padding: 22px 18px 32px;
+  border: 1px solid rgba(184, 59, 47, .42);
+  background:
+    linear-gradient(90deg, transparent 0 12px, rgba(184, 59, 47, .14) 12px 14px, transparent 14px calc(100% - 14px), rgba(184, 59, 47, .14) calc(100% - 14px) calc(100% - 12px), transparent calc(100% - 12px)),
+    rgba(255, 248, 231, .82);
+  box-shadow: 5px 5px 0 rgba(184, 59, 47, .16);
+  animation: omikuji-first-in .5s cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes omikuji-first-in {
+  from { opacity: 0; transform: translateY(-10px); }
+}
+.form-kicker {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 17px;
+  color: var(--vermilion);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: .13em;
+}
+.form-kicker strong {
+  color: var(--ink);
+  font-size: 16px;
+  letter-spacing: .08em;
+}
 .form-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .form-heading > span { font-family: Georgia, serif; font-size: 42px; color: var(--red); line-height: 1; }
 .form-heading p { margin: 0 0 4px; color: #7a756a; font-size: 11px; }
@@ -693,7 +722,7 @@ select, .riddle-box input[type="text"], .chat-form input { border-radius: 12px; 
 
 @media (min-width: 851px) {
   .app-shell { width: min(100%, 1040px); }
-  .input-layout { grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: 58px; }
+  .input-layout { grid-template-columns: minmax(0, 760px); justify-content: center; gap: 0; }
   .intro-panel { padding-right: 8px; }
 }
 
