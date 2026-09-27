@@ -756,9 +756,9 @@ body { font-size: var(--text-body); }
 .input-layout, .result-view { width: min(100% - 40px, 1120px); }
 .intro-panel { padding-top: 28px; }
 .intro-panel h1 { margin: 12px 0; font-size: clamp(34px, 7vw, 48px); }
-.intro-panel > p { margin-bottom: 16px; font-size: 15px; line-height: 1.7; }
-.mascot-stage { height: 176px; margin-top: 12px; }
-.mascot-visual { width: 74%; left: 45%; bottom: -34%; }
+.intro-panel > p { max-width: 620px; margin-bottom: 16px; font-size: 15px; line-height: 1.7; }
+.mascot-stage { height: 240px; margin-top: 12px; }
+.mascot-visual { width: 68%; left: 45%; bottom: -24%; }
 .guidebook-prop { right: 5%; bottom: 10%; transform: scale(.78) rotate(5deg); transform-origin: right bottom; }
 .stage-sparkle-large { width: 48px; height: 48px; }
 .stage-sparkle-small { width: 26px; height: 26px; }
