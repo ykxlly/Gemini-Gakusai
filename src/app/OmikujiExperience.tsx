@@ -218,10 +218,45 @@ export default function OmikujiExperience() {
   const [selectionReaction, setSelectionReaction] = useState<{ message: string; motion: string; key: number } | null>(null);
   const [activeResultTab, setActiveResultTab] = useState<"omikuji" | "discovery" | "memories">("omikuji");
   const reactionTimer = useRef<number | null>(null);
+  const chatLogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (chatLogRef.current) {
+      chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  function handleSelectResultTab(tab: "omikuji" | "discovery" | "memories") {
+    setActiveResultTab(tab);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   function showToast(message: string) {
     setToast(message);
     window.setTimeout(() => setToast((current) => (current === message ? "" : current)), 3600);
+  }
+
+  async function shareFortune() {
+    if (!result) return;
+    const shareText = `【BDSF 寄り道おみくじ】今日の運勢は「${result.fortune_name}」！最初に向かう企画は「${result.mission.target_spot}」。\n#BDSF2026 #寄り道おみくじ`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `BDSF 寄り道おみくじ - ${result.fortune_name}`,
+          text: shareText,
+          url: window.location.href,
+        });
+        return;
+      } catch (shareErr) {
+        if (shareErr instanceof DOMException && shareErr.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(`${shareText}\n${window.location.href}`);
+      showToast("結果をクリップボードにコピーしました");
+    } catch {
+      showToast("共有テキストのコピーに失敗しました");
+    }
   }
 
   const canSubmit = Boolean(mood && goal && companion && !isLoading);
@@ -399,6 +434,7 @@ export default function OmikujiExperience() {
     window.setTimeout(() => setIsSuzuPulling(false), 760);
     setIsLoading(true);
     setMissionComplete(false);
+    setActiveResultTab("omikuji");
     setRiddleAnswer("");
     setRiddleResult(null);
     setPhotoPreview(null);
@@ -703,9 +739,10 @@ export default function OmikujiExperience() {
     let line = "";
     let lineY = Math.min(y + 80, 1730);
     for (const word of words) {
+      if (lineY > 1880) break;
       if (context.measureText(line + word).width > 900) { context.fillText(line, 70, lineY); line = word; lineY += 45; } else line += word;
     }
-    if (line) context.fillText(line, 70, lineY);
+    if (line && lineY <= 1880) context.fillText(line, 70, lineY);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
     if (!blob) return;
     const file = new File([blob], "bdsf-omide-shiori.png", { type: "image/png" });
@@ -953,11 +990,6 @@ export default function OmikujiExperience() {
       ) : (
         <section className={`result-view ${isResetting ? "result-leaving" : ""}`} aria-live="polite">
           <button className="back-button" onClick={reset} type="button"><ArrowLeft size={18} /> 選び直す</button>
-          <nav className="result-tabbar result-tabbar-top" aria-label="結果画面のメニュー">
-            <button aria-current={activeResultTab === "omikuji" ? "page" : undefined} onClick={() => setActiveResultTab("omikuji")} type="button"><Star size={17} /> おみくじ</button>
-            <button aria-current={activeResultTab === "discovery" ? "page" : undefined} onClick={() => setActiveResultTab("discovery")} type="button"><Trophy size={17} /> 発見</button>
-            <button aria-current={activeResultTab === "memories" ? "page" : undefined} onClick={() => setActiveResultTab("memories")} type="button"><Images size={17} /> 思い出</button>
-          </nav>
           {activeResultTab === "omikuji" && <>
           <article className="destination-hero omikuji-reveal-card">
             <div className="destination-kicker"><MapPin size={15} /> 最初に向かう企画 {isFallbackResult && <span>公式データから提案</span>}</div>
@@ -1027,7 +1059,7 @@ export default function OmikujiExperience() {
               <Sparkles size={14} />
               {missionComplete && discoveryResult?.rally_complete ? "三つの印がそろいました" : missionComplete ? "次は、お題の一枚を奉納しよう" : "まずは目的地で、お題を達成しよう"}
             </p>
-            <button className="rally-next-button" onClick={() => setActiveResultTab("discovery")} type="button">
+            <button className="rally-next-button" onClick={() => handleSelectResultTab("discovery")} type="button">
               {missionComplete && discoveryResult?.rally_complete ? <><Trophy size={16} /> 三つの印を集めた！</> : <><ArrowRight size={16} /> {missionComplete ? "お題の一枚を奉納する" : "現地のお題を見る"}</>}
             </button>
           </section>
@@ -1060,6 +1092,7 @@ export default function OmikujiExperience() {
           )}
           <div className="action-tip"><Star size={20} fill="currentColor" /><div><small>運をひらく一言</small><p>{result.action_tip}</p></div></div>
           <div className="result-actions">
+            <button className="share-fortune-button" onClick={shareFortune} type="button"><Share2 size={18} /> 結果をシェア</button>
             <button className="same-conditions-button" disabled={isLoading} onClick={requestFortune} type="button"><RefreshCw size={18} /> 同じ条件で別の企画</button>
             <button className="redraw-button" onClick={reset} type="button"><ArrowLeft size={18} /> 回答を変更する</button>
           </div>
@@ -1153,7 +1186,7 @@ export default function OmikujiExperience() {
           </>}
           {activeResultTab === "memories" && <>
           <header className="tab-section-heading"><span>今日の記録</span><h2>思い出を持ち帰ろう</h2><p>しおり、お守りカード、今日のまとめを作れます。</p></header>
-          <details className="extras-accordion">
+          <details className="extras-accordion" open>
             <summary><BookMarked size={14} /> 思い出を残す</summary>
             <div className="ai-tools">
               <button className="ai-button" disabled={isNarrating} onClick={playNarration} type="button">
@@ -1181,7 +1214,7 @@ export default function OmikujiExperience() {
             <div aria-live="polite" className="ai-panel chat-panel">
               <h3><MessageCircle size={14} /> 巫女さんに聞いてみる</h3>
               {chatMessages.length === 0 && <p className="chat-hint">運勢やミッションについて気になることを聞いてみましょう</p>}
-              <div className="chat-log">
+              <div className="chat-log" ref={chatLogRef}>
                 {chatMessages.map((entry, index) => (
                   <p className={`chat-bubble ${entry.role === "user" ? "chat-bubble-user" : "chat-bubble-model"}`} key={index}>
                     {entry.text}
@@ -1243,9 +1276,9 @@ export default function OmikujiExperience() {
           </details>
           </>}
           <nav className="result-tabbar result-tabbar-bottom" aria-label="結果画面のメニュー">
-            <button aria-current={activeResultTab === "omikuji" ? "page" : undefined} onClick={() => setActiveResultTab("omikuji")} type="button"><Star size={18} /> おみくじ</button>
-            <button aria-current={activeResultTab === "discovery" ? "page" : undefined} onClick={() => setActiveResultTab("discovery")} type="button"><Trophy size={18} /> 発見</button>
-            <button aria-current={activeResultTab === "memories" ? "page" : undefined} onClick={() => setActiveResultTab("memories")} type="button"><Images size={18} /> 思い出</button>
+            <button aria-current={activeResultTab === "omikuji" ? "page" : undefined} onClick={() => handleSelectResultTab("omikuji")} type="button"><Star size={18} /> おみくじ</button>
+            <button aria-current={activeResultTab === "discovery" ? "page" : undefined} onClick={() => handleSelectResultTab("discovery")} type="button"><Trophy size={18} /> 発見</button>
+            <button aria-current={activeResultTab === "memories" ? "page" : undefined} onClick={() => handleSelectResultTab("memories")} type="button"><Images size={18} /> 思い出</button>
           </nav>
         </section>
       )}

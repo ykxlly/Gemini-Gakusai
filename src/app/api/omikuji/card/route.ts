@@ -2,6 +2,8 @@ import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
 import { generateWithAIFallback } from "@/lib/ai-fallback";
 import { getGenAI } from "@/lib/gemini";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
+import { errorResponse, isText, MAX_SHORT_TEXT } from "@/lib/validation";
 
 type CardRequest = {
   fortuneName?: unknown;
@@ -18,11 +20,11 @@ const responseSchema = {
   required: ["phrase", "accent_hex"],
 } as const;
 
-function isText(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const limited = rateLimit(`${ip}:card`, 10, 60_000);
+  if (limited) return limited;
+
   const ai = getGenAI();
 
   let body: CardRequest;
@@ -30,15 +32,13 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as CardRequest;
   } catch {
-    return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    return errorResponse("Request body must be valid JSON.", 400);
   }
 
-  if (!isText(body.fortuneName) || !isText(body.color) || !isText(body.spot)) {
-    return NextResponse.json({ error: "fortuneName, color, and spot are required strings." }, { status: 400 });
+  if (!isText(body.fortuneName, MAX_SHORT_TEXT) || !isText(body.color, MAX_SHORT_TEXT) || !isText(body.spot, MAX_SHORT_TEXT)) {
+    return errorResponse("fortuneName, color, and spot are required strings within limits.", 400);
   }
 
-  // Uses the same free-tier text model as the main route; the card visual is rendered client-side
-  // so no paid image-generation model (and its quota) is required.
   const prompt = `学園祭の御守り札「${body.fortuneName.trim()}」のためのデザイン素材を考えてください。
 ラッキーカラーは${body.color.trim()}、モチーフのスポットは「${body.spot.trim()}」です。
 phrase には御守りに刻む短く縁起の良い一言を、accent_hex にはラッキーカラーを表すHEXカラーコードを入れてください。`;
@@ -59,9 +59,13 @@ phrase には御守りに刻む短く縁起の良い一言を、accent_hex に�
       },
     });
 
-    return NextResponse.json(JSON.parse(response.text));
+    const parsed = JSON.parse(response.text) as Record<string, unknown>;
+    if (!parsed || typeof parsed.phrase !== "string" || typeof parsed.accent_hex !== "string") {
+      throw new Error("Invalid card response format");
+    }
+    return NextResponse.json(parsed);
   } catch (error) {
     console.error("Failed to generate omikuji card:", error);
-    return NextResponse.json({ error: "Failed to generate the card." }, { status: 502 });
+    return errorResponse("Failed to generate the card.", 502);
   }
 }

@@ -2,6 +2,8 @@ import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
 import { generateWithAIFallback, groqImageMessage } from "@/lib/ai-fallback";
 import { getGenAI } from "@/lib/gemini";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
+import { errorResponse, isText, MAX_IMAGE_BASE64_LENGTH, MAX_SHORT_TEXT } from "@/lib/validation";
 import spots from "@/data/spots.json";
 
 type VerifyRequest = {
@@ -28,11 +30,11 @@ const responseSchema = {
   required: ["stamp_title", "comment", "caption", "rally_complete", "card_title", "card_message", "next_spot"],
 } as const;
 
-function isText(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const limited = rateLimit(`${ip}:verify`, 5, 60_000);
+  if (limited) return limited;
+
   const ai = getGenAI();
 
   let body: VerifyRequest;
@@ -40,13 +42,20 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as VerifyRequest;
   } catch {
-    return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    return errorResponse("Request body must be valid JSON.", 400);
   }
 
-  if (!isText(body.spot) || !isText(body.missionDescription) || !isText(body.imageBase64) || !isText(body.mimeType) || !isText(body.rallyPrompt)) {
-    return NextResponse.json(
-      { error: "spot, missionDescription, imageBase64, mimeType, and rallyPrompt are required strings." },
-      { status: 400 },
+  if (
+    !isText(body.spot, MAX_SHORT_TEXT) ||
+    !isText(body.missionDescription, 500) ||
+    !isText(body.imageBase64, MAX_IMAGE_BASE64_LENGTH) ||
+    !isText(body.mimeType, 50) ||
+    !body.mimeType.startsWith("image/") ||
+    !isText(body.rallyPrompt, MAX_SHORT_TEXT)
+  ) {
+    return errorResponse(
+      "spot, missionDescription, imageBase64, mimeType (image/*), and rallyPrompt are required strings within limits.",
+      400,
     );
   }
 
@@ -85,6 +94,6 @@ next_spotは、上記の企画とは異なる公式掲載企画から選び、�
     return NextResponse.json(JSON.parse(response.text));
   } catch (error) {
     console.error("Failed to create discovery stamp:", error);
-    return NextResponse.json({ error: "Failed to create discovery stamp." }, { status: 502 });
+    return errorResponse("Failed to create discovery stamp.", 502);
   }
 }

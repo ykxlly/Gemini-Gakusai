@@ -2,6 +2,8 @@ import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
 import { generateWithAIFallback } from "@/lib/ai-fallback";
 import { getGenAI } from "@/lib/gemini";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
+import { errorResponse, isText, MAX_SHORT_TEXT } from "@/lib/validation";
 import spots from "@/data/spots.json";
 
 type OmikujiRequest = {
@@ -58,21 +60,21 @@ const responseSchema = {
   required: ["fortune_name", "message", "action_tip", "compatibility_note", "mission", "lucky_elements"],
 } as const;
 
-function isText(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
 function isValidOmikujiResult(value: unknown): value is Record<string, unknown> {
   if (!value || typeof value !== "object") return false;
   const result = value as Record<string, unknown>;
   const mission = result.mission as Record<string, unknown> | undefined;
   const lucky = result.lucky_elements as Record<string, unknown> | undefined;
-  return isText(result.fortune_name) && isText(result.message) && isText(result.action_tip) && typeof result.compatibility_note === "string"
-    && !!mission && isText(mission.title) && isText(mission.target_spot) && isText(mission.description) && isText(mission.riddle) && isText(mission.riddle_answer)
-    && !!lucky && isText(lucky.color) && isText(lucky.food) && isText(lucky.spot);
+  return isText(result.fortune_name, 200) && isText(result.message, 500) && isText(result.action_tip, 200) && typeof result.compatibility_note === "string"
+    && !!mission && isText(mission.title, 200) && isText(mission.target_spot, 200) && spotNames.includes(mission.target_spot) && isText(mission.description, 500) && isText(mission.riddle, 300) && isText(mission.riddle_answer, 200)
+    && !!lucky && isText(lucky.color, 100) && isText(lucky.food, 100) && isText(lucky.spot, 200);
 }
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const limited = rateLimit(`${ip}:omikuji`, 10, 60_000);
+  if (limited) return limited;
+
   const ai = getGenAI();
 
   let body: OmikujiRequest;
@@ -80,20 +82,20 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as OmikujiRequest;
   } catch {
-    return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    return errorResponse("Request body must be valid JSON.", 400);
   }
 
   if (
-    !isText(body.mood) ||
-    !isText(body.goal) ||
-    !isText(body.companion) ||
-    (body.mbti !== undefined && !isText(body.mbti)) ||
-    (body.partnerMood !== undefined && !isText(body.partnerMood)) ||
-    (body.partnerGoal !== undefined && !isText(body.partnerGoal))
+    !isText(body.mood, MAX_SHORT_TEXT) ||
+    !isText(body.goal, MAX_SHORT_TEXT) ||
+    !isText(body.companion, MAX_SHORT_TEXT) ||
+    (body.mbti !== undefined && !isText(body.mbti, MAX_SHORT_TEXT)) ||
+    (body.partnerMood !== undefined && !isText(body.partnerMood, MAX_SHORT_TEXT)) ||
+    (body.partnerGoal !== undefined && !isText(body.partnerGoal, MAX_SHORT_TEXT))
   ) {
-    return NextResponse.json(
-      { error: "mood, goal, and companion are required strings. mbti/partnerMood/partnerGoal must be strings when provided." },
-      { status: 400 },
+    return errorResponse(
+      "mood, goal, and companion are required strings. mbti/partnerMood/partnerGoal must be strings when provided.",
+      400,
     );
   }
 
@@ -159,6 +161,6 @@ lucky_elements.spot も上記企画名から選んでください。responseSche
     return NextResponse.json(result);
   } catch (error) {
     console.error("Failed to generate omikuji:", error);
-    return NextResponse.json({ error: "Failed to generate omikuji." }, { status: 502 });
+    return errorResponse("Failed to generate omikuji.", 502);
   }
 }

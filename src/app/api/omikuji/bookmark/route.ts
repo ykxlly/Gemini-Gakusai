@@ -2,6 +2,8 @@ import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
 import { generateWithAIFallback } from "@/lib/ai-fallback";
 import { getGenAI } from "@/lib/gemini";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
+import { errorResponse, isText, MAX_MEDIUM_TEXT, MAX_SHORT_TEXT } from "@/lib/validation";
 
 type Memory = { caption: string; spot: string; area: string };
 type BookmarkRequest = { fortuneName?: unknown; memories?: unknown };
@@ -17,22 +19,29 @@ const responseSchema = {
 
 function isValidMemories(value: unknown): value is Memory[] {
   return Array.isArray(value) && value.length > 0 && value.length <= 3 && value.every((memory) =>
-    memory && typeof memory === "object" && typeof memory.caption === "string" && typeof memory.spot === "string" && typeof memory.area === "string",
+    memory && typeof memory === "object"
+    && isText(memory.caption, MAX_MEDIUM_TEXT)
+    && isText(memory.spot, MAX_SHORT_TEXT)
+    && isText(memory.area, MAX_SHORT_TEXT),
   );
 }
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const limited = rateLimit(`${ip}:bookmark`, 10, 60_000);
+  if (limited) return limited;
+
   const ai = getGenAI();
 
   let body: BookmarkRequest;
   try {
     body = (await request.json()) as BookmarkRequest;
   } catch {
-    return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    return errorResponse("Request body must be valid JSON.", 400);
   }
 
-  if (typeof body.fortuneName !== "string" || !isValidMemories(body.memories)) {
-    return NextResponse.json({ error: "fortuneName and 1 to 3 memories are required." }, { status: 400 });
+  if (!isText(body.fortuneName, MAX_SHORT_TEXT) || !isValidMemories(body.memories)) {
+    return errorResponse("fortuneName and 1 to 3 valid memories are required.", 400);
   }
 
   const memoryText = body.memories.map((memory, index) => `${index + 1}. ${memory.spot}（${memory.area}）: ${memory.caption}`).join("\n");
@@ -58,6 +67,6 @@ titleにはしおりのタイトル、closing_commentには思い出を優しく
     return NextResponse.json(JSON.parse(response.text));
   } catch (error) {
     console.error("Failed to create memory bookmark:", error);
-    return NextResponse.json({ error: "Failed to create memory bookmark." }, { status: 502 });
+    return errorResponse("Failed to create memory bookmark.", 502);
   }
 }

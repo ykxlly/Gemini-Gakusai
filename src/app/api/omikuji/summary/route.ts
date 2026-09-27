@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { generateWithAIFallback } from "@/lib/ai-fallback";
 import { getGenAI } from "@/lib/gemini";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
+import { errorResponse, isText, MAX_LONG_TEXT, MAX_SHORT_TEXT } from "@/lib/validation";
 
 type SummaryRequest = {
   fortunes?: unknown;
@@ -16,13 +18,17 @@ function isValidFortunes(value: unknown): value is FortuneEntry[] {
       (entry) =>
         entry &&
         typeof entry === "object" &&
-        typeof entry.fortune_name === "string" &&
-        typeof entry.message === "string",
+        isText(entry.fortune_name, MAX_SHORT_TEXT) &&
+        isText(entry.message, MAX_LONG_TEXT),
     )
   );
 }
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const limited = rateLimit(`${ip}:summary`, 5, 60_000);
+  if (limited) return limited;
+
   const ai = getGenAI();
 
   let body: SummaryRequest;
@@ -30,11 +36,11 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as SummaryRequest;
   } catch {
-    return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    return errorResponse("Request body must be valid JSON.", 400);
   }
 
   if (!isValidFortunes(body.fortunes)) {
-    return NextResponse.json({ error: "fortunes must be a non-empty array of { fortune_name, message }." }, { status: 400 });
+    return errorResponse("fortunes must be a non-empty array of valid { fortune_name, message } entries.", 400);
   }
 
   const history = body.fortunes.slice(-5)
@@ -57,6 +63,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ summary: response.text.trim() });
   } catch (error) {
     console.error("Failed to summarize the day:", error);
-    return NextResponse.json({ error: "Failed to generate the summary." }, { status: 502 });
+    return errorResponse("Failed to generate the summary.", 502);
   }
 }

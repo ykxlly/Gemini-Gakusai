@@ -2,6 +2,8 @@ import { Type } from "@google/genai";
 import { NextResponse } from "next/server";
 import { generateWithAIFallback } from "@/lib/ai-fallback";
 import { getGenAI } from "@/lib/gemini";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
+import { errorResponse, isText, MAX_MEDIUM_TEXT } from "@/lib/validation";
 
 type RiddleRequest = {
   riddle?: unknown;
@@ -18,11 +20,11 @@ const responseSchema = {
   required: ["correct", "feedback"],
 } as const;
 
-function isText(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const limited = rateLimit(`${ip}:riddle`, 15, 60_000);
+  if (limited) return limited;
+
   const ai = getGenAI();
 
   let body: RiddleRequest;
@@ -30,11 +32,11 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as RiddleRequest;
   } catch {
-    return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    return errorResponse("Request body must be valid JSON.", 400);
   }
 
-  if (!isText(body.riddle) || !isText(body.expectedAnswer) || !isText(body.userAnswer)) {
-    return NextResponse.json({ error: "riddle, expectedAnswer, and userAnswer are required strings." }, { status: 400 });
+  if (!isText(body.riddle, MAX_MEDIUM_TEXT) || !isText(body.expectedAnswer, MAX_MEDIUM_TEXT) || !isText(body.userAnswer, MAX_MEDIUM_TEXT)) {
+    return errorResponse("riddle, expectedAnswer, and userAnswer are required strings within limits.", 400);
   }
 
   const prompt = `なぞなぞ「${body.riddle.trim()}」の想定解答は「${body.expectedAnswer.trim()}」です。
@@ -57,9 +59,13 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(JSON.parse(response.text));
+    const parsed = JSON.parse(response.text) as Record<string, unknown>;
+    if (!parsed || typeof parsed.correct !== "boolean" || typeof parsed.feedback !== "string") {
+      throw new Error("Invalid riddle response format");
+    }
+    return NextResponse.json(parsed);
   } catch (error) {
     console.error("Failed to check riddle answer:", error);
-    return NextResponse.json({ error: "Failed to check the answer." }, { status: 502 });
+    return errorResponse("Failed to check the answer.", 502);
   }
 }
