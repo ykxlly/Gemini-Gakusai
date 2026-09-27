@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, BookMarked, BookOpen, Camera, Check, CircleCheckBig, HelpCircle, Images, MapPin, MessageCircle, RefreshCw, Send, Share2, Sparkles, Star, Trophy, Utensils, Volume2, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookMarked, BookOpen, Camera, Check, CircleCheckBig, Gift, HelpCircle, Images, MapPin, MessageCircle, RefreshCw, Send, Share2, Sparkles, Star, Trophy, Volume2, Wand2 } from "lucide-react";
 import Image from "next/image";
 import { FormEvent, useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from "react";
 import { flushSync } from "react-dom";
@@ -19,6 +19,7 @@ type Choice = { value: string; label: string; note: string };
 type DiscoveryResult = { stamp_title: string; comment: string; caption: string; rally_complete: boolean; card_title: string; card_message: string; next_spot: string };
 type MemoryEntry = { image: string; caption: string; spot: string; area: string };
 type DiscoveryCard = { spot: string; title: string; message: string };
+type NoveltyKind = "sticker" | "tote";
 type FestivalSpot = {
   id: string;
   name: string;
@@ -175,10 +176,18 @@ export default function OmikujiExperience() {
   const [mbti, setMbti] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isBoothMode, setIsBoothMode] = useState(false);
+  const [claimedNovelties, setClaimedNovelties] = useState<NoveltyKind[]>([]);
+  const [latestClaim, setLatestClaim] = useState<NoveltyKind | null>(null);
+  const [visitorId, setVisitorId] = useState("");
+  const [staffKey, setStaffKey] = useState("");
+  const [claimError, setClaimError] = useState("");
+  const [isClaiming, setIsClaiming] = useState<NoveltyKind | null>(null);
   const [isResetting, setIsResetting] = useState(false);
   const [missionComplete, setMissionComplete] = useState(false);
   const [error, setError] = useState("");
   const [isPunching, setIsPunching] = useState(false);
+  const [isSuzuPulling, setIsSuzuPulling] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [confetti, setConfetti] = useState<{ id: number; left: number; color: string; delay: number; duration: number }[]>([]);
   const [partnerMood, setPartnerMood] = useState("");
@@ -207,6 +216,7 @@ export default function OmikujiExperience() {
   const [isFallbackResult, setIsFallbackResult] = useState(false);
   const [rouletteSpot, setRouletteSpot] = useState(festivalSpots[0].name);
   const [selectionReaction, setSelectionReaction] = useState<{ message: string; motion: string; key: number } | null>(null);
+  const [activeResultTab, setActiveResultTab] = useState<"omikuji" | "discovery" | "memories">("omikuji");
   const reactionTimer = useRef<number | null>(null);
 
   function showToast(message: string) {
@@ -326,10 +336,19 @@ export default function OmikujiExperience() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
+      setIsBoothMode(new URLSearchParams(window.location.search).get("booth") === "novelty");
+      const storedVisitorId = window.localStorage.getItem("omikuji-visitor-id");
+      const nextVisitorId = storedVisitorId || (window.crypto.randomUUID ? window.crypto.randomUUID() : `visitor-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+      if (!storedVisitorId) window.localStorage.setItem("omikuji-visitor-id", nextVisitorId);
+      setVisitorId(nextVisitorId);
       const stored = window.localStorage.getItem("omikuji-history");
       if (stored) setHistory(JSON.parse(stored));
       const storedCards = window.localStorage.getItem("omikuji-discovery-cards");
       if (storedCards) setDiscoveryCards(JSON.parse(storedCards));
+      const storedClaims = window.localStorage.getItem("omikuji-novelty-claims");
+      if (storedClaims) setClaimedNovelties(JSON.parse(storedClaims));
+      const storedLatestClaim = window.localStorage.getItem("omikuji-latest-novelty-claim");
+      if (storedLatestClaim === "sticker" || storedLatestClaim === "tote") setLatestClaim(storedLatestClaim);
     } catch {
       /* ignore corrupt storage */
     }
@@ -351,6 +370,15 @@ export default function OmikujiExperience() {
   }, [discoveryCards]);
 
   useEffect(() => {
+    try {
+      window.localStorage.setItem("omikuji-novelty-claims", JSON.stringify(claimedNovelties));
+      if (latestClaim) window.localStorage.setItem("omikuji-latest-novelty-claim", latestClaim);
+    } catch {
+      /* ignore storage errors */
+    }
+  }, [claimedNovelties, latestClaim]);
+
+  useEffect(() => {
     if (!result) return;
     setHistory((previous) => {
       const next = [...previous, { fortune_name: result.fortune_name, message: result.message }].slice(-10);
@@ -366,7 +394,9 @@ export default function OmikujiExperience() {
   async function requestFortune() {
     setError("");
     setIsPunching(true);
+    setIsSuzuPulling(true);
     window.setTimeout(() => setIsPunching(false), 380);
+    window.setTimeout(() => setIsSuzuPulling(false), 760);
     setIsLoading(true);
     setMissionComplete(false);
     setRiddleAnswer("");
@@ -415,6 +445,30 @@ export default function OmikujiExperience() {
     await requestFortune();
   }
 
+  async function claimNovelty(kind: NoveltyKind) {
+    const requiredCards = kind === "sticker" ? 1 : 3;
+    if (discoveryCards.length < requiredCards || claimedNovelties.includes(kind) || !visitorId || isClaiming) return;
+    setClaimError("");
+    setIsClaiming(kind);
+    try {
+      const response = await fetch("/api/novelty/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visitorId, noveltyKind: kind, discoveryCount: discoveryCards.length, staffKey }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "交換記録を保存できませんでした。");
+      setClaimedNovelties((current) => [...current, kind]);
+      setLatestClaim(kind);
+      setStaffKey("");
+      showToast(kind === "sticker" ? "ステッカーの交換を記録しました" : "トートバッグの交換を記録しました");
+    } catch (error) {
+      setClaimError(error instanceof Error ? error.message : "交換記録を保存できませんでした。");
+    } finally {
+      setIsClaiming(null);
+    }
+  }
+
   function reset() {
     setIsResetting(true);
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -422,6 +476,7 @@ export default function OmikujiExperience() {
       setResult(null);
       setError("");
       setFormStep(0);
+      setActiveResultTab("omikuji");
       setMissionComplete(false);
       setIsResetting(false);
       window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
@@ -722,22 +777,68 @@ export default function OmikujiExperience() {
 
   return (
     <main className="app-shell">
+      {isBoothMode && (
+        <section className="booth-reward" aria-labelledby="booth-reward-title">
+          <div className="booth-reward-kicker"><Gift size={16} /> ブース来訪特典</div>
+          <h1 id="booth-reward-title">集めた印を<br /><em>ノベルティ</em>に交換</h1>
+          <p className="booth-reward-lead">寄り道御朱印帳の記録数に応じて、好きな特典を選べます。</p>
+          <div className="booth-reward-count"><span>現在の発見カード</span><strong>{discoveryCards.length}<small>件</small></strong></div>
+          {latestClaim && (
+            <div className="staff-confirmation" role="status" aria-live="polite">
+              <div className="staff-confirmation-status"><Check size={22} strokeWidth={3} /><span>交換済み</span></div>
+              <div className="staff-confirmation-main">
+                <small>スタッフ確認用</small>
+                <strong>{latestClaim === "sticker" ? "ステッカー" : "トートバッグ"}</strong>
+                <p>この画面をスタッフに見せて、ノベルティをお受け取りください。</p>
+              </div>
+              <div className="staff-confirmation-meta"><span>発見カード {discoveryCards.length}件</span><span>BDSF 2026</span></div>
+            </div>
+          )}
+          <div className="claim-ticket" aria-label="スタッフに見せる受付番号">
+            <span>授与所 受付番号</span>
+            <strong>{visitorId ? visitorId.replace(/[^a-zA-Z0-9]/g, "").slice(-6).toUpperCase() : "------"}</strong>
+            <p>交換を申し込むとき、この番号をスタッフにお見せください。</p>
+          </div>
+          <div className="staff-key-panel">
+            <label htmlFor="novelty-staff-key">スタッフ承認キー</label>
+            <input id="novelty-staff-key" inputMode="text" onChange={(event) => setStaffKey(event.target.value)} placeholder="スタッフが入力してください" type="password" value={staffKey} />
+            <p>スタッフ端末で承認キーを入力してから、授与を確定します。</p>
+          </div>
+          {claimError && <p className="claim-error" role="alert">授与所が混み合っています。画面を閉じずにスタッフへお声がけください。<br />{claimError}</p>}
+          <div className="booth-reward-options">
+            <article className={`booth-reward-option ${discoveryCards.length >= 1 ? "booth-reward-available" : ""} ${claimedNovelties.includes("sticker") ? "booth-reward-claimed" : ""}`}>
+              <span className="booth-reward-seal">一印</span>
+              <div><small>1件以上</small><h2>ステッカー</h2><p>{claimedNovelties.includes("sticker") ? "この端末では交換済みです" : discoveryCards.length >= 1 ? "交換できます" : "あと1件で交換できます"}</p></div>
+              <button disabled={discoveryCards.length < 1 || claimedNovelties.includes("sticker") || isClaiming !== null} onClick={() => claimNovelty("sticker")} type="button">{claimedNovelties.includes("sticker") ? <><Check size={16} /> 交換済み</> : isClaiming === "sticker" ? <><RefreshCw className="spin" size={14} /> 記録中</> : discoveryCards.length >= 1 ? "交換する" : "条件未達成"}</button>
+            </article>
+            <article className={`booth-reward-option ${discoveryCards.length >= 3 ? "booth-reward-available" : ""} ${claimedNovelties.includes("tote") ? "booth-reward-claimed" : ""}`}>
+              <span className="booth-reward-seal">三印</span>
+              <div><small>3件以上</small><h2>トートバッグ</h2><p>{claimedNovelties.includes("tote") ? "この端末では交換済みです" : discoveryCards.length >= 3 ? "交換できます" : `あと${Math.max(0, 3 - discoveryCards.length)}件で交換できます`}</p></div>
+              <button disabled={discoveryCards.length < 3 || claimedNovelties.includes("tote") || isClaiming !== null} onClick={() => claimNovelty("tote")} type="button">{claimedNovelties.includes("tote") ? <><Check size={16} /> 交換済み</> : isClaiming === "tote" ? <><RefreshCw className="spin" size={14} /> 記録中</> : discoveryCards.length >= 3 ? "交換する" : "条件未達成"}</button>
+            </article>
+          </div>
+          <p className="booth-reward-note">交換ボタンを押したら、この画面をブーススタッフに見せてください。</p>
+          <a className="booth-reward-back" href="#top">寄り道おみくじへ戻る</a>
+        </section>
+      )}
       <header className="site-header">
         <a className="brand" href="#top" aria-label="BDSF 寄り道おみくじ トップ">
           <span className="brand-mark"><Image alt="" height={38} priority src="/sparkle-clean.png" unoptimized width={38} /></span>
           <span>BDSF 2026<br /><strong>寄り道おみくじ</strong></span>
         </a>
-        <span className="festival-tag">公式企画から案内</span>
+        <span className="festival-tag">御神籤授与所</span>
       </header>
 
       {!result ? (
         <div className="input-layout" id="top">
           <section className="intro-panel">
-            <div className="eyebrow"><Star size={14} fill="currentColor" /> 会場を楽しむ、ちいさなきっかけ</div>
-            <h1>今日は、どんな<br /><em>寄り道</em>をする？</h1>
-            <p>気分を3つ選ぶだけ。BDSF 2026の出店企画から、今のあなたに似合う行き先と小さなお題を届けます。</p>
-            <div className={`mascot-stage mascot-progress-${selectionCount} ${selectionReaction ? `mascot-${selectionReaction.motion}` : ""}`}>
-              <div className="booth-sign" aria-hidden="true">文化祭の寄り道案内 <span>一</span></div>
+            <div className="shrine-counter-intro"><span className="shrine-counter-rope" aria-hidden="true" /><div><strong>寄り道神社</strong><small>今日の運勢を授かる場所</small></div></div>
+            <div className="eyebrow"><Star size={14} fill="currentColor" /> 御神籤授与所</div>
+            <h1>今日の<em>寄り道</em>を<br />授かろう</h1>
+            <p>BDSF 2026の公式企画から、今のあなたに似合う行き先を一枚の御神籤にしてお渡しします。</p>
+            <div className={`mascot-stage shrine-stage ${isSuzuPulling ? "suzu-pulling-stage" : ""} mascot-progress-${selectionCount} ${selectionReaction ? `mascot-${selectionReaction.motion}` : ""}`}>
+              <div className="torii-mark" aria-hidden="true"><span /><i /><b /></div>
+              <div className="booth-sign" aria-hidden="true">寄り道神社 御神籤授与所 <span>一</span></div>
               <div className="mascot-visual">
                 <Image
                   alt="寄り道おみくじの案内キャラクター"
@@ -751,22 +852,38 @@ export default function OmikujiExperience() {
                 <span aria-hidden="true" className="eye-glint eye-glint-left" />
                 <span aria-hidden="true" className="eye-glint eye-glint-right" />
               </div>
-              <div className="guidebook-prop" aria-hidden="true">
+              <div className="guidebook-prop omikuji-box-prop" aria-hidden="true">
                 <small>BDSF 2026</small>
-                <strong>寄り道<br />案内帳</strong>
-                <span>会場でひらく</span>
+                <strong>御神籤<br />授与札</strong>
+                <span>一枚どうぞ</span>
               </div>
               <Image alt="" className="stage-sparkle stage-sparkle-large" height={78} src="/sparkle-clean.png" unoptimized width={78} />
               <Image alt="" className="stage-sparkle stage-sparkle-small" height={38} src="/sparkle-clean.png" unoptimized width={38} />
+              <span className="suzu-rope" aria-hidden="true"><i /></span>
               <span className="mascot-caption" aria-live="polite" key={selectionReaction?.key || "idle"}>{mascotMessage}</span>
             </div>
-            <div className="privacy-note"><Check size={16} /> 入力はおすすめを選ぶためだけに使います</div>
+            <div className="privacy-note"><Check size={16} /> 三つの印を奉納すると、御神籤を授かれます</div>
+            <div className={`draw-progress ${selectionCount === 3 ? "draw-progress-complete" : ""}`} aria-label={`御神籤の準備 ${selectionCount} / 3`}>
+              <div className="draw-progress-heading">
+                <span>今日の寄り道印</span>
+                <strong>{selectionCount}/3</strong>
+              </div>
+              <div className="draw-progress-marks" aria-hidden="true">
+                {["気分", "目的", "同行者"].map((label, index) => (
+                  <span className={selectionCount > index ? "draw-progress-mark-filled" : ""} key={label}>
+                    <i>{selectionCount > index ? "印" : index + 1}</i>
+                    <small>{label}</small>
+                  </span>
+                ))}
+              </div>
+              <p>{selectionCount === 3 ? "準備が整いました。今日の運勢を引いてみよう！" : `あと${3 - selectionCount}つ選ぶと、おみくじを引けます`}</p>
+            </div>
           </section>
 
           <section className="form-panel" aria-labelledby="form-title">
             <div className="form-heading">
-              <span>0{formStep + 1}</span>
-              <div><p>{formStep + 1} / 3 · ひとつ選ぶだけ</p><h2 id="form-title">{formStep === 0 ? "今の気分は？" : formStep === 1 ? "今日の目的は？" : "誰と来た？"}</h2></div>
+              <span>{["一", "二", "三"][formStep]}</span>
+              <div><p>{formStep < 2 ? `あと${2 - formStep}つ` : "最後のひとつ"} · ひとつ選ぶだけ</p><h2 id="form-title">{formStep === 0 ? "気分" : formStep === 1 ? "目的" : "同行者"}</h2></div>
             </div>
             <div className="form-step-tabs" aria-label="回答の進み具合">
               {["気分", "目的", "同行者"].map((label, index) => (
@@ -823,8 +940,8 @@ export default function OmikujiExperience() {
                 {formStep < 2 ? (
                   <button className="draw-button" disabled={formStep === 0 ? !mood : !goal} onClick={() => setFormStep((step) => step + 1)} type="button">次へ <ArrowRight size={20} /></button>
                 ) : (
-                  <button className={`draw-button ${isPunching ? "button-punch" : ""}`} disabled={!canSubmit} type="submit">
-                    {isLoading ? <><RefreshCw className="spin" size={20} /> 運勢を読み解いています...</> : companion ? <>おみくじを引く <ArrowRight size={20} /></> : <>同行者を選ぶ <ArrowRight size={20} /></>}
+                  <button className={`draw-button ${isPunching ? "button-punch" : ""} ${isSuzuPulling ? "suzu-pull-button" : ""}`} disabled={!canSubmit} type="submit">
+                    {isLoading ? <><RefreshCw className="spin" size={20} /> 御神籤を整えています...</> : companion ? <>鈴緒を引いて授かる <ArrowRight size={20} /></> : <>同行者を選ぶ <ArrowRight size={20} /></>}
                   </button>
                 )}
               </div>
@@ -834,8 +951,20 @@ export default function OmikujiExperience() {
       ) : (
         <section className={`result-view ${isResetting ? "result-leaving" : ""}`} aria-live="polite">
           <button className="back-button" onClick={reset} type="button"><ArrowLeft size={18} /> 選び直す</button>
-          <article className="destination-hero">
+          <nav className="result-tabbar result-tabbar-top" aria-label="結果画面のメニュー">
+            <button aria-current={activeResultTab === "omikuji" ? "page" : undefined} onClick={() => setActiveResultTab("omikuji")} type="button"><Star size={17} /> おみくじ</button>
+            <button aria-current={activeResultTab === "discovery" ? "page" : undefined} onClick={() => setActiveResultTab("discovery")} type="button"><Trophy size={17} /> 発見</button>
+            <button aria-current={activeResultTab === "memories" ? "page" : undefined} onClick={() => setActiveResultTab("memories")} type="button"><Images size={17} /> 思い出</button>
+          </nav>
+          {activeResultTab === "omikuji" && <>
+          <article className="destination-hero omikuji-reveal-card">
             <div className="destination-kicker"><MapPin size={15} /> 最初に向かう企画 {isFallbackResult && <span>公式データから提案</span>}</div>
+            {isFallbackResult && (
+              <div className="fallback-notice" role="status">
+                <span>案内係からのお知らせ</span>
+                <p>案内所が混み合っているため、公式企画から一枚を選びました。</p>
+              </div>
+            )}
             <h1>{result.mission.target_spot}</h1>
             <div className="destination-location">
               <strong>{missionSpot?.location || "公式案内で場所を確認"}</strong>
@@ -849,23 +978,62 @@ export default function OmikujiExperience() {
                 {missionSpot.notice && <div><dt>案内</dt><dd>{missionSpot.notice}</dd></div>}
               </dl>
             )}
-            <div className="destination-mission"><small>ここでやること</small><strong>{result.mission.title}</strong><p>{result.mission.description}</p></div>
-            <div className="route-map" aria-label={`おみくじブース S103から${missionSpot?.location || "目的地"}までのエリア案内`}>
-              <div className="route-map-heading"><span>会場案内</span><strong>S103から{destinationPoint.zone}へ</strong></div>
-              <div className="area-route">
-                <span className="area-node area-start"><i>1</i><small>現在地</small><strong>S103</strong></span>
-                <span className="area-arrow" aria-hidden="true"><ArrowRight size={20} /></span>
-                <span className="area-node area-goal"><i>2</i><small>移動先</small><strong>{destinationPoint.zone}</strong></span>
+            <div className="destination-mission"><small>次にすること</small><strong>目的地へ向かい、入口の案内を確認</strong><p>{result.mission.description}</p></div>
+            <div className="route-map" id="festival-route" aria-label={`おみくじブース S103から${missionSpot?.location || "目的地"}までのエリア案内`}>
+              <div className="route-map-heading"><span>会場案内</span><strong>道しるべをたどろう</strong></div>
+              <div className="lantern-route">
+                <div className="lantern-route-line" aria-hidden="true" />
+                <div className="lantern-stop">
+                  <span className="lantern-mark">一</span>
+                  <div><small>出発</small><strong>おみくじ受付</strong><span>S103</span></div>
+                </div>
+                <div className="lantern-stop">
+                  <span className="lantern-mark">二</span>
+                  <div><small>目印にするエリア</small><strong>{destinationPoint.zone}</strong><span>案内表示を目印に進む</span></div>
+                </div>
+                <div className="lantern-stop lantern-stop-goal">
+                  <span className="lantern-mark">三</span>
+                  <div><small>目的地</small><strong>{missionSpot?.location || "目的地"}</strong><span>入口の案内を確認</span></div>
+                </div>
               </div>
-              <p><MapPin size={13} /> {missionSpot?.location || "公式案内で場所を確認してください"}</p>
-              <small className="map-disclaimer">会場内のエリア案内です。通路は現地の表示をご確認ください。</small>
+              <small className="map-disclaimer">会場内の通路は、現地の案内表示にしたがってお進みください。</small>
             </div>
-            <a className="official-project-button" href="https://ku-bdsfes.pages.dev/projects" rel="noreferrer" target="_blank">公式の企画情報を確認する</a>
+            <a className="destination-primary-button" href="#festival-route"><MapPin size={18} /> 道しるべを見る</a>
+            <a className="official-project-button" href="https://ku-bdsfes.pages.dev/projects" rel="noreferrer" target="_blank">企画の詳細を見る</a>
           </article>
+          <section className="rally-progress" aria-labelledby="rally-title">
+            <div className="rally-progress-heading">
+              <div><span>寄り道御朱印帳</span><h2 id="rally-title">三つの印を集めよう</h2></div>
+              <strong aria-label={`3つ中${[true, missionComplete, Boolean(discoveryResult?.rally_complete)].filter(Boolean).length}つ達成`}>{[true, missionComplete, Boolean(discoveryResult?.rally_complete)].filter(Boolean).length}/3</strong>
+            </div>
+            <div
+              aria-label="寄り道あそびの進捗"
+              aria-valuemax={3}
+              aria-valuemin={0}
+              aria-valuenow={[true, missionComplete, Boolean(discoveryResult?.rally_complete)].filter(Boolean).length}
+              className="rally-progress-bar"
+              role="progressbar"
+            >
+              <span style={{ width: `${([true, missionComplete, Boolean(discoveryResult?.rally_complete)].filter(Boolean).length / 3) * 100}%` }} />
+            </div>
+            <div className="rally-stamps">
+              <div className="rally-stamp rally-stamp-complete"><span>一</span><small>運勢</small><strong>出発</strong></div>
+              <div className={`rally-stamp ${missionComplete ? "rally-stamp-complete" : ""}`}><span>二</span><small>現地ミッション</small><strong>{missionComplete ? "達成" : "未達成"}</strong></div>
+              <div className={`rally-stamp ${discoveryResult?.rally_complete ? "rally-stamp-complete" : ""}`}><span>三</span><small>お題フォト</small><strong>{discoveryResult?.rally_complete ? "達成" : "未達成"}</strong></div>
+            </div>
+            <p className="rally-next-label">
+              <Sparkles size={14} />
+              {missionComplete && discoveryResult?.rally_complete ? "三つの印がそろいました" : missionComplete ? "次は、お題の一枚を奉納しよう" : "まずは目的地で、お題を達成しよう"}
+            </p>
+            <button className="rally-next-button" onClick={() => setActiveResultTab("discovery")} type="button">
+              {missionComplete && discoveryResult?.rally_complete ? <><Trophy size={16} /> 三つの印を集めた！</> : <><ArrowRight size={16} /> {missionComplete ? "お題の一枚を奉納する" : "現地のお題を見る"}</>}
+            </button>
+          </section>
           <div className="result-heading">
+            <div className="result-paper-kicker"><span>奉納</span> 今日の御神籤授与札 <small>寄り道神社</small></div>
             <Image alt="" className="result-sparkle" height={80} src="/sparkle-clean.png" unoptimized width={80} />
-            <div className="eyebrow"><Sparkles size={14} /> 今日の寄り道運</div>
-            <p>今日のあなたの運勢は</p>
+            <div className="eyebrow"><Star size={14} fill="currentColor" /> 今日の御神籤</div>
+            <p>三つの印を納めたあなたへ</p>
             <h1 aria-label={result.fortune_name} className={getFortuneNameSize(result.fortune_name)}>
               {Array.from(result.fortune_name).map((char, index) => (
                 <span aria-hidden="true" className="fortune-char" key={index} style={{ "--i": index } as CSSProperties}>
@@ -873,9 +1041,29 @@ export default function OmikujiExperience() {
                 </span>
               ))}
             </h1>
-            <div className="result-seal"><Star size={18} fill="currentColor" /> 御籤</div>
+            <div className="result-seal"><Star size={18} fill="currentColor" /> 授与済</div>
           </div>
           <blockquote>{result.message}</blockquote>
+          <aside className="lucky-summary">
+            <span>今日のラッキー</span>
+            <strong>{result.lucky_elements.color}</strong>
+            <strong>{result.lucky_elements.food}</strong>
+            <strong>{result.lucky_elements.spot}</strong>
+          </aside>
+          {result.compatibility_note && (
+            <div aria-live="polite" className="ai-panel">
+              <h3>同行の相性</h3>
+              <p>{result.compatibility_note}</p>
+            </div>
+          )}
+          <div className="action-tip"><Star size={20} fill="currentColor" /><div><small>運をひらく一言</small><p>{result.action_tip}</p></div></div>
+          <div className="result-actions">
+            <button className="same-conditions-button" disabled={isLoading} onClick={requestFortune} type="button"><RefreshCw size={18} /> 同じ条件で別の企画</button>
+            <button className="redraw-button" onClick={reset} type="button"><ArrowLeft size={18} /> 回答を変更する</button>
+          </div>
+          </>}
+          {activeResultTab === "discovery" && <>
+          <header className="tab-section-heading"><span>到着したら</span><h2>企画の中で発見しよう</h2><p>お題、なぞなぞ、発見カメラをここにまとめました。</p></header>
           <div className="result-grid">
             <article className={`mission-block ${missionComplete ? "mission-complete" : ""}`}>
               <div className="block-label"><span>お題</span> 到着したら</div>
@@ -959,24 +1147,12 @@ export default function OmikujiExperience() {
                 </div>
               </details>
             </article>
-            <aside className="lucky-block">
-              <div className="block-label"><span>おまけ</span> 今日のラッキー</div>
-              <dl>
-                <div><dt><span className="color-dot" /> 色</dt><dd>{result.lucky_elements.color}</dd></div>
-                <div><dt><Utensils size={15} /> 食</dt><dd>{result.lucky_elements.food}</dd></div>
-                <div><dt><MapPin size={15} /> 場所</dt><dd>{result.lucky_elements.spot}</dd></div>
-              </dl>
-            </aside>
           </div>
-          {result.compatibility_note && (
-            <div aria-live="polite" className="ai-panel">
-              <h3>相性診断</h3>
-              <p>{result.compatibility_note}</p>
-            </div>
-          )}
-          <div className="action-tip"><Sparkles size={20} /><div><small>運をひらくアクション</small><p>{result.action_tip}</p></div></div>
+          </>}
+          {activeResultTab === "memories" && <>
+          <header className="tab-section-heading"><span>今日の記録</span><h2>思い出を持ち帰ろう</h2><p>しおり、お守りカード、今日のまとめを作れます。</p></header>
           <details className="extras-accordion">
-            <summary><Sparkles size={14} /> もっと楽しむ</summary>
+            <summary><BookMarked size={14} /> 思い出を残す</summary>
             <div className="ai-tools">
               <button className="ai-button" disabled={isNarrating} onClick={playNarration} type="button">
                 {isNarrating ? <RefreshCw className="spin" size={14} /> : <Volume2 size={14} />} 音声で聞く
@@ -1001,7 +1177,7 @@ export default function OmikujiExperience() {
               </div>
             )}
             <div aria-live="polite" className="ai-panel chat-panel">
-              <h3><MessageCircle size={14} /> 案内係に聞いてみる</h3>
+              <h3><MessageCircle size={14} /> 巫女さんに聞いてみる</h3>
               {chatMessages.length === 0 && <p className="chat-hint">運勢やミッションについて気になることを聞いてみましょう</p>}
               <div className="chat-log">
                 {chatMessages.map((entry, index) => (
@@ -1063,15 +1239,17 @@ export default function OmikujiExperience() {
               </div>
             )}
           </details>
-          <div className="result-actions">
-            <button className="same-conditions-button" disabled={isLoading} onClick={requestFortune} type="button"><RefreshCw size={18} /> 同じ条件で別の企画</button>
-            <button className="redraw-button" onClick={reset} type="button"><ArrowLeft size={18} /> 回答を変更する</button>
-          </div>
+          </>}
+          <nav className="result-tabbar result-tabbar-bottom" aria-label="結果画面のメニュー">
+            <button aria-current={activeResultTab === "omikuji" ? "page" : undefined} onClick={() => setActiveResultTab("omikuji")} type="button"><Star size={18} /> おみくじ</button>
+            <button aria-current={activeResultTab === "discovery" ? "page" : undefined} onClick={() => setActiveResultTab("discovery")} type="button"><Trophy size={18} /> 発見</button>
+            <button aria-current={activeResultTab === "memories" ? "page" : undefined} onClick={() => setActiveResultTab("memories")} type="button"><Images size={18} /> 思い出</button>
+          </nav>
         </section>
       )}
       {toast && <div aria-live="polite" className="toast" role="status">{toast}</div>}
       {isLoading && (
-        <div className="drawing-overlay" role="status" aria-live="polite">
+        <div className={`drawing-overlay ${isSuzuPulling ? "drawing-pulling" : ""}`} role="status" aria-live="polite">
           <div className="drawing-scene">
             {Array.from({ length: 6 }).map((_, index) => (
               <span
@@ -1091,8 +1269,14 @@ export default function OmikujiExperience() {
               unoptimized
               width={400}
             />
+            <div className={`drawing-omikuji-slip ${isSuzuPulling ? "" : "drawing-omikuji-slip-visible"}`} aria-hidden="true">
+              <span>今日の御神籤</span>
+              <strong>授与札</strong>
+              <small>寄り道神社</small>
+            </div>
           </div>
-          <strong>運勢を読み解いています</strong>
+          <strong>{isSuzuPulling ? "鈴緒を引いています" : "御神籤を整えています"}</strong>
+          <span className="drawing-prayer">鈴緒を引いて、今日の運を授かります</span>
           <div className="project-roulette" aria-hidden="true">
             <small>次の企画候補</small>
             <span key={rouletteSpot}>{rouletteSpot}</span>
