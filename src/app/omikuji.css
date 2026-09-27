@@ -128,6 +128,13 @@ button, label, select { -webkit-tap-highlight-color: transparent; }
   font-size: 16px;
   letter-spacing: .08em;
 }
+.form-guidance {
+  margin: -11px 0 18px;
+  padding-left: 54px;
+  color: #756b5d;
+  font-size: 11px;
+  line-height: 1.7;
+}
 .form-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .form-heading > span { font-family: Georgia, serif; font-size: 42px; color: var(--red); line-height: 1; }
 .form-heading p { margin: 0 0 4px; color: #7a756a; font-size: 11px; }
@@ -150,14 +157,14 @@ button, label, select { -webkit-tap-highlight-color: transparent; }
 .form-section legend, .select-label { display: block; margin-bottom: 12px; font-size: 13px; font-weight: 800; }
 .select-label span { margin-left: 6px; color: #898478; font-size: 10px; font-weight: 500; }
 .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-.choice { position: relative; overflow: hidden; min-height: 72px; padding: 13px 14px; display: flex; align-items: center; gap: 11px; border: 1px solid var(--line); background: rgba(255,255,255,.5); cursor: pointer; transition: border-color .15s, background .15s, transform .15s; }
+.choice { position: relative; overflow: hidden; min-height: 76px; padding: 13px 14px; display: flex; align-items: center; gap: 11px; border: 1px solid rgba(184, 59, 47, .2); border-left: 4px solid rgba(184, 59, 47, .28); background: rgba(255,255,255,.68); cursor: pointer; transition: border-color .15s, background .15s, transform .15s, box-shadow .15s; }
 .choice:hover { border-color: #8f897b; transform: translateY(-1px); }
 .choice input, .segment-control input { position: absolute; opacity: 0; pointer-events: none; }
 .choice-check { flex: 0 0 auto; width: 20px; height: 20px; display: grid; place-items: center; border: 1px solid #9c968a; border-radius: 50%; }
 .choice strong, .choice small { display: block; }
 .choice strong { font-size: 13px; }
 .choice small { margin-top: 4px; color: #7a756a; font-size: 10px; }
-.choice-selected { border-color: var(--red); background: #fff8f3; animation: choice-confirm .28s cubic-bezier(.2, .8, .2, 1); }
+.choice-selected { border-color: var(--red); border-left-width: 7px; background: #fff8f3; box-shadow: 3px 3px 0 rgba(184, 59, 47, .14); animation: choice-confirm .28s cubic-bezier(.2, .8, .2, 1); }
 .choice-selected .choice-check { border-color: var(--red); background: var(--red); color: white; }
 .choice-selected .choice-check svg { animation: check-pop .3s cubic-bezier(.34, 1.56, .64, 1) both; }
 .choice-selected::after, .segment-selected::after {

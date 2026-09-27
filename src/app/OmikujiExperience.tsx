@@ -886,6 +886,7 @@ export default function OmikujiExperience() {
               <span>{["一", "二", "三"][formStep]}</span>
               <div><p>{formStep < 2 ? `あと${2 - formStep}つ` : "最後のひとつ"} · ひとつ選ぶだけ</p><h2 id="form-title">{formStep === 0 ? "気分" : formStep === 1 ? "目的" : "同行者"}</h2></div>
             </div>
+            <p className="form-guidance">迷ったら、いま一番近いものを直感で選んでください。</p>
             <div className="form-step-tabs" aria-label="回答の進み具合">
               {["気分", "目的", "同行者"].map((label, index) => (
                 <button className={formStep === index ? "form-step-current" : ""} disabled={index > formStep && ![mood, goal, companion][index - 1]} key={label} onClick={() => setFormStep(index)} type="button">
