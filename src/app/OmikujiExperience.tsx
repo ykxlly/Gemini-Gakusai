@@ -139,8 +139,6 @@ export default function OmikujiExperience() {
     );
   }
 
-  const phaseIndex = phase === "top" ? 0 : phase === "result" ? 1 : phase === "mission" ? 2 : 3;
-
   return (
     <main className="app-shell">
       <SiteHeader />
@@ -171,14 +169,6 @@ export default function OmikujiExperience() {
           setCompanion={fortune.setCompanion}
           draw={fortune.draw}
         />
-      )}
-
-      {phase !== "top" && (
-        <div className="phase-progress" aria-hidden="true">
-          {[1, 2, 3].map((step) => (
-            <i key={step} className={phaseIndex >= step ? "phase-progress-done" : ""} />
-          ))}
-        </div>
       )}
 
       {fortune.result && (phase === "result" || phase === "mission") && (

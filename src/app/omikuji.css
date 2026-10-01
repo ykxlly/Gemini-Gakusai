@@ -1410,6 +1410,3 @@ body {
 .memories-sheet-heading h2 { margin: 4px 0; font-family: var(--font-display); font-size: 22px; letter-spacing: .06em; }
 .memories-sheet-heading p { margin: 0; color: #5f5b51; font-size: 12px; }
 .memories-sheet-close { min-width: 44px; min-height: 44px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: white; cursor: pointer; }
-.phase-progress { display: flex; gap: 6px; align-items: center; justify-content: center; margin: 0 auto; padding: 10px 0 0; width: calc(100% - 24px); }
-.phase-progress i { height: 4px; flex: 1; border-radius: 99px; background: #e3dcc9; }
-.phase-progress i.phase-progress-done { background: var(--red); }
