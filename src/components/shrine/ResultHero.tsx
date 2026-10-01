@@ -5,7 +5,7 @@
 import { ArrowLeft, MapPin, RefreshCw, Share2, Star } from "lucide-react";
 import Image from "next/image";
 import type { CSSProperties } from "react";
-import { memo } from "react";
+import { memo, useState } from "react";
 import RallyProgress from "@/components/shrine/RallyProgress";
 import { copy } from "@/lib/copy";
 import { getLocationPoint, type FestivalSpot, type Result } from "@/lib/fortune";
@@ -41,6 +41,17 @@ function ResultHero({
   onShare: () => void;
 }) {
   const destinationPoint = getLocationPoint(missionSpot?.location);
+  const [isSharing, setIsSharing] = useState(false);
+
+  async function handleShareClick() {
+    if (isSharing) return;
+    setIsSharing(true);
+    try {
+      await onShare();
+    } finally {
+      setIsSharing(false);
+    }
+  }
 
   return (
     <>
@@ -193,8 +204,9 @@ function ResultHero({
         </div>
       </div>
       <div className="result-actions">
-        <button className="share-fortune-button" onClick={onShare} type="button">
-          <Share2 size={18} /> {copy.result.share}
+        <button className="share-fortune-button" disabled={isSharing} onClick={handleShareClick} type="button">
+          {isSharing ? <RefreshCw className="spin" size={18} /> : <Share2 size={18} />}{" "}
+          {isSharing ? copy.result.sharing : copy.result.share}
         </button>
         <button
           className="same-conditions-button"

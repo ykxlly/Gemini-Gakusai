@@ -136,8 +136,8 @@ export default function OmikujiExperience() {
     fortune.requestFortune();
   }, [fortune]);
 
-  const handleShare = useCallback(() => {
-    if (fortune.result) shareFortune(fortune.result, showToast);
+  const handleShare = useCallback(async () => {
+    if (fortune.result) await shareFortune(fortune.result, showToast);
   }, [fortune.result, showToast]);
 
   const openMemories = useCallback(() => setMemoriesOpen(true), []);

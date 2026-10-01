@@ -46,6 +46,8 @@ export const copy = {
     retrySame: "同じ条件で別企画",
     changeAnswer: "回答を変える",
     share: "結果をシェア",
+    sharing: "シェアを準備しています...",
+    shareOpened: "シェアを開きました",
     shareCopied: "結果をクリップボードにコピーしました",
     shareCopyFailed: "共有テキストのコピーに失敗しました",
     error: "おみくじを引けませんでした。電波状況を確認の上、もう一度鈴を鳴らしてみてください。",
