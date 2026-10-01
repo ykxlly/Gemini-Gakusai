@@ -27,7 +27,7 @@ function ShrineDiorama({ isSuzuPulling, selectionCount, selectionReaction, masco
           priority
           quality={100}
           sizes="(max-width: 768px) 100vw, 800px"
-          src="/shrine-bg.png"
+          src="/shrine-bg.jpg"
           unoptimized
         />
         <div className="diorama-veil" aria-hidden="true" />
