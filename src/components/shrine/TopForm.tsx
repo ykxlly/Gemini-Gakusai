@@ -130,15 +130,6 @@ function TopForm(props: TopFormProps) {
             <span aria-hidden="true" className="eye-glint eye-glint-left" />
             <span aria-hidden="true" className="eye-glint eye-glint-right" />
           </div>
-          <div className="guidebook-prop omikuji-box-prop" aria-hidden="true">
-            <small>{copy.site.festival}</small>
-            <strong>
-              御神籤
-              <br />
-              授与札
-            </strong>
-            <span>一枚どうぞ</span>
-          </div>
           <Image
             alt=""
             className="stage-sparkle stage-sparkle-large"
