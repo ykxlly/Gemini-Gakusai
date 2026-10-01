@@ -16,6 +16,7 @@ type ChatRequest = {
 function isValidHistory(value: unknown): value is ChatTurn[] {
   return (
     Array.isArray(value) &&
+    value.length <= 20 &&
     value.every(
       (turn) =>
         turn &&

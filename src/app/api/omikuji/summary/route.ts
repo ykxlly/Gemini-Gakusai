@@ -14,6 +14,7 @@ function isValidFortunes(value: unknown): value is FortuneEntry[] {
   return (
     Array.isArray(value) &&
     value.length > 0 &&
+    value.length <= 20 &&
     value.every(
       (entry) =>
         entry &&
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   if (!isValidFortunes(body.fortunes)) {
-    return errorResponse("fortunes must be a non-empty array of valid { fortune_name, message } entries.", 400);
+    return errorResponse("fortunes must be a non-empty array (max 20) of valid { fortune_name, message } entries.", 400);
   }
 
   const history = body.fortunes.slice(-5)

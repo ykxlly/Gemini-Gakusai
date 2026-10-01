@@ -1,3 +1,10 @@
+// Best-effort per-instance in-memory rate limiter.
+// NOTE: Vercel serverless runs multiple isolated instances, so this Map is NOT
+// shared across instances/regions. It still blocks naive rapid-fire abuse from a
+// single instance, but a strict global limit requires an external store.
+// Migration path: replace this module with Upstash Redis (@upstash/redis +
+// @upstash/ratelimit, sliding-window per key, e.g. `omikuji:{ip}`) and keep the
+// same `rateLimit(ip, limit, windowMs)` signature. See docs/step3-completion.md.
 type WindowEntry = { count: number; resetAt: number };
 
 const windows = new Map<string, WindowEntry>();
