@@ -25,7 +25,8 @@ function ShrineDiorama({ isSuzuPulling, selectionCount, selectionReaction, masco
           className="diorama-bg"
           fill
           priority
-          sizes="(max-width: 428px) 100vw, 428px"
+          quality={100}
+          sizes="(max-width: 768px) 100vw, 800px"
           src="/shrine-bg.png"
           unoptimized
         />

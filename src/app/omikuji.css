@@ -1219,6 +1219,9 @@ body {
 .diorama-bg {
   object-fit: cover !important;
   object-position: center !important;
+  filter: blur(2px);
+  transform: scale(1.06);
+  image-rendering: auto;
   pointer-events: none;
 }
 .diorama-veil {
