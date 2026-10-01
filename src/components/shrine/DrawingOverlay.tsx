@@ -4,9 +4,10 @@
 
 import Image from "next/image";
 import type { CSSProperties } from "react";
+import { memo } from "react";
 import { copy } from "@/lib/copy";
 
-export default function DrawingOverlay({
+function DrawingOverlay({
   isSuzuPulling,
   rouletteSpot,
   loadingMessageIndex,
@@ -75,3 +76,5 @@ export default function DrawingOverlay({
     </div>
   );
 }
+
+export default memo(DrawingOverlay);

@@ -134,3 +134,22 @@ export function createFallbackResult(goal: string, companion: string, previousSp
 export function normalizeAnswer(value: string): string {
   return value.normalize("NFKC").toLowerCase().replace(/[\s、。,.!！?？・()（）]/g, "");
 }
+
+export function isValidHex(value: string): boolean {
+  return /^#[0-9a-fA-F]{6}$/.test(value.trim());
+}
+
+// /api/omikuji/verify の応答ガード。AI由来の不定形JSONから画面を守る。
+export function isDiscoveryResult(value: unknown): value is DiscoveryResult {
+  if (!value || typeof value !== "object") return false;
+  const r = value as Record<string, unknown>;
+  return (
+    typeof r.stamp_title === "string" &&
+    typeof r.comment === "string" &&
+    typeof r.caption === "string" &&
+    typeof r.rally_complete === "boolean" &&
+    typeof r.card_title === "string" &&
+    typeof r.card_message === "string" &&
+    typeof r.next_spot === "string"
+  );
+}

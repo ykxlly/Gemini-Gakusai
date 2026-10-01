@@ -2,6 +2,10 @@
 // トーン: 神社・おみくじの世界観を保ちつつ、参加者に意図が正確に伝わる表現。
 
 export const copy = {
+  common: {
+    timeout: "通信がタイムアウトしました。電波状況を確認の上、もう一度お試しください。",
+    rateLimited: "リクエストが混み合っています。しばらく待ってからお試しください。",
+  },
   site: {
     title: "BDSF 寄り道おみくじ",
     festival: "BDSF 2026",
@@ -63,10 +67,10 @@ export const copy = {
     photoFallbackToast: "発見スタンプを作りました",
     manualCta: "現地に着いた・やってみた",
     completeCta: "印がそろった！交換へ進む",
+    checkRewardCta: "交換所を確認する",
   },
   reward: {
-    heading: "集めた印をノベルティに交換",
-    lead: "寄り道御朱印帳の記録数に応じて、好きな特典を選べます。",
+    heading: "集めた印をノベルティに交換",    lead: "寄り道御朱印帳の記録数に応じて、好きな特典を選べます。",
     countLabel: "現在の発見カード",
     ticketLabel: "授与所 受付番号",
     ticketHint: "交換を申し込むとき、この番号をスタッフにお見せください。",

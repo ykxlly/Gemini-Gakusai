@@ -1,7 +1,8 @@
 // Step2-3: Phase管理のみの薄い親。S0→S1→S2→S3の直線フロー + 裏動線(MemoriesSheet)。
+// 子へのpropsはuseCallback/useMemoで安定化し、memo化コンポーネントの再描画を抑える。
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import DrawingOverlay from "@/components/shrine/DrawingOverlay";
 import MemoriesSheet from "@/components/shrine/MemoriesSheet";
 import MissionPanel from "@/components/shrine/MissionPanel";
@@ -35,24 +36,19 @@ export default function OmikujiExperience() {
   const [isResetting, setIsResetting] = useState(false);
   const [previousSpot, setPreviousSpot] = useState<string | undefined>(undefined);
 
-  function handleDrawn(result: Result, isFallback: boolean) {
-    void isFallback;
-    persist.appendHistory({ fortune_name: result.fortune_name, message: result.message });
-    setPreviousSpot(result.mission.target_spot);
-    setPhase("result");
-    fireConfetti(result.fortune_name.includes("大吉") ? 36 : 16);
-  }
+  const fortune = useFortune({ previousSpot, notify: showToast, onDrawStart: handleDrawStart, onDrawn: handleDrawn });
 
-  const fortune = useFortune({ previousSpot, notify: showToast, onDrawn: handleDrawn });
-
-  const missionSpot = getMissionSpot(fortune.result?.mission.target_spot);
+  const missionSpot = useMemo(
+    () => getMissionSpot(fortune.result?.mission.target_spot),
+    [fortune.result],
+  );
 
   const discovery = useDiscovery({
     result: fortune.result,
     missionLocation: missionSpot?.location || "会場",
     setDiscoveryCards: persist.setDiscoveryCards,
     notify: showToast,
-    onStampAcquired: () => fireConfetti(28),
+    onStampAcquired: handleStampAcquired,
   });
 
   const claim = useNoveltyClaim({
@@ -69,6 +65,86 @@ export default function OmikujiExperience() {
     memories: discovery.memories,
     history: persist.history,
   });
+
+  // 巻き上げ関数宣言: 描画開始・完了時の横断リセット。呼び出し時点では全フック初期化済み。
+  function handleDrawStart() {
+    discovery.resetDiscovery();
+    memoriesStore.resetMemories();
+  }
+
+  function handleDrawn(result: Result, isFallback: boolean) {
+    void isFallback;
+    persist.appendHistory({ fortune_name: result.fortune_name, message: result.message });
+    setPreviousSpot(result.mission.target_spot);
+    discovery.resetDiscovery();
+    memoriesStore.resetMemories();
+    setPhase("result");
+    fireConfetti(result.fortune_name.includes("大吉") ? 36 : 16);
+  }
+
+  function handleStampAcquired() {
+    fireConfetti(28);
+  }
+
+  const goReward = useCallback(() => {
+    setPhase("reward");
+    scrollTop();
+  }, []);
+
+  const goResult = useCallback(() => {
+    setPhase("result");
+    scrollTop();
+  }, []);
+
+  // 印3/3なら交換所へ、未完ならミッションへ（旧実装では常にdiscovery遷移だった不具合を修正）。
+  const rallyAdvance = useCallback(() => {
+    if (discovery.missionComplete && discovery.discoveryResult?.rally_complete) {
+      setPhase("reward");
+    } else {
+      setPhase("mission");
+    }
+    scrollTop();
+  }, [discovery.missionComplete, discovery.discoveryResult]);
+
+  const backFromReward = useCallback(() => {
+    setPhase(fortune.result ? "result" : "top");
+    scrollTop();
+  }, [fortune.result]);
+
+  const toggleMission = useCallback(() => {
+    if (!discovery.missionComplete) fireConfetti(28);
+    discovery.celebrateMission();
+  }, [discovery, fireConfetti]);
+
+  const resetToTop = useCallback(() => {
+    setIsResetting(true);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.setTimeout(
+      () => {
+        fortune.resetFortune();
+        discovery.resetDiscovery();
+        memoriesStore.resetMemories();
+        setPhase("top");
+        setIsResetting(false);
+        scrollTop(false);
+      },
+      reduceMotion ? 0 : 260,
+    );
+  }, [fortune, discovery, memoriesStore]);
+
+  const retrySame = useCallback(() => {
+    fortune.requestFortune();
+  }, [fortune]);
+
+  const handleShare = useCallback(() => {
+    if (fortune.result) shareFortune(fortune.result, showToast);
+  }, [fortune.result, showToast]);
+
+  const openMemories = useCallback(() => setMemoriesOpen(true), []);
+  const closeMemories = useCallback(() => setMemoriesOpen(false), []);
+
+  const missionComplete = discovery.missionComplete;
+  const rallyComplete = Boolean(discovery.discoveryResult?.rally_complete);
 
   // ?booth=novelty では交換所（S3）を先頭に表示する。
   useEffect(() => {
@@ -102,42 +178,6 @@ export default function OmikujiExperience() {
   useEffect(() => {
     if (!fortune.result) clearConfetti();
   }, [fortune.result, clearConfetti]);
-
-  function goMission() {
-    setPhase("mission");
-    scrollTop();
-  }
-
-  function goReward() {
-    setPhase("reward");
-    scrollTop();
-  }
-
-  function backFromReward() {
-    setPhase(fortune.result ? "result" : "top");
-    scrollTop();
-  }
-
-  function toggleMission() {
-    if (!discovery.missionComplete) fireConfetti(28);
-    discovery.celebrateMission();
-  }
-
-  function resetToTop() {
-    setIsResetting(true);
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.setTimeout(
-      () => {
-        fortune.resetFortune();
-        discovery.resetDiscovery();
-        memoriesStore.resetMemories();
-        setPhase("top");
-        setIsResetting(false);
-        scrollTop(false);
-      },
-      reduceMotion ? 0 : 260,
-    );
-  }
 
   return (
     <main className="app-shell">
@@ -181,31 +221,33 @@ export default function OmikujiExperience() {
               result={fortune.result}
               isFallbackResult={fortune.isFallbackResult}
               missionSpot={missionSpot}
-              missionComplete={discovery.missionComplete}
-              rallyComplete={Boolean(discovery.discoveryResult?.rally_complete)}
+              missionComplete={missionComplete}
+              rallyComplete={rallyComplete}
               isLoading={fortune.isLoading}
-              onGoMission={goMission}
-              onRetrySame={() => fortune.requestFortune()}
+              onGoMission={rallyAdvance}
+              onRetrySame={retrySame}
               onChangeAnswer={resetToTop}
-              onShare={() => shareFortune(fortune.result!, showToast)}
+              onShare={handleShare}
             />
           )}
           {phase === "mission" && (
             <MissionPanel
               result={fortune.result}
-              missionComplete={discovery.missionComplete}
+              missionComplete={missionComplete}
               onToggleMission={toggleMission}
               riddleAnswer={discovery.riddleAnswer}
               setRiddleAnswer={discovery.setRiddleAnswer}
               riddleResult={discovery.riddleResult}
               isCheckingRiddle={discovery.isCheckingRiddle}
-              onCheckRiddle={() => discovery.checkRiddle()}
+              onCheckRiddle={discovery.checkRiddle}
               photoRallyPrompt={discovery.photoRallyPrompt}
               photoPreview={discovery.photoPreview}
               onPhotoSelect={discovery.handlePhotoSelect}
               isVerifying={discovery.isVerifying}
               discoveryResult={discovery.discoveryResult}
-              onCreateStamp={() => discovery.createDiscoveryStamp()}
+              rallyComplete={rallyComplete}
+              onCreateStamp={discovery.createDiscoveryStamp}
+              onBackToResult={goResult}
               onComplete={goReward}
             />
           )}
@@ -222,7 +264,7 @@ export default function OmikujiExperience() {
           setStaffKey={claim.setStaffKey}
           claimError={claim.claimError}
           isClaiming={claim.isClaiming}
-          onClaim={(kind) => claim.claimNovelty(kind)}
+          onClaim={claim.claimNovelty}
           showBack
           onBackToTop={backFromReward}
         />
@@ -230,14 +272,15 @@ export default function OmikujiExperience() {
 
       <MemoriesSheet
         open={memoriesOpen}
+        fabHidden={fortune.isLoading}
         result={fortune.result}
         memories={discovery.memories}
         discoveryCards={persist.discoveryCards}
         history={persist.history}
         store={memoriesStore}
         notify={showToast}
-        onOpen={() => setMemoriesOpen(true)}
-        onClose={() => setMemoriesOpen(false)}
+        onOpen={openMemories}
+        onClose={closeMemories}
       />
 
       <Toast message={toast} />

@@ -3,9 +3,10 @@
 "use client";
 
 import { ArrowRight, Sparkles, Trophy } from "lucide-react";
+import { memo } from "react";
 import { copy } from "@/lib/copy";
 
-export default function RallyProgress({
+function RallyProgress({
   missionComplete,
   rallyComplete,
   onAdvance,
@@ -75,3 +76,5 @@ export default function RallyProgress({
     </section>
   );
 }
+
+export default memo(RallyProgress);

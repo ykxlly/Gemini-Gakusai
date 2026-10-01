@@ -2,8 +2,9 @@
 // S2 ミッション行動: 手動達成・なぞなぞ・発見カメラ。印がそろえば交換へ誘導する。
 "use client";
 
-import { ArrowRight, BookMarked, Camera, Check, CircleCheckBig, HelpCircle, RefreshCw, Sparkles, Trophy } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookMarked, Camera, Check, CircleCheckBig, HelpCircle, RefreshCw, Sparkles, Trophy } from "lucide-react";
 import type { CSSProperties } from "react";
+import { memo } from "react";
 import { copy } from "@/lib/copy";
 import type { DiscoveryResult, Result } from "@/lib/fortune";
 
@@ -26,21 +27,26 @@ export type MissionPanelProps = {
   onPhotoSelect: (event: React.ChangeEvent<HTMLInputElement>) => void;
   isVerifying: boolean;
   discoveryResult: DiscoveryResult | null;
+  rallyComplete: boolean;
   onCreateStamp: () => void;
+  onBackToResult: () => void;
   onComplete: () => void;
 };
 
-export default function MissionPanel(props: MissionPanelProps) {
+function MissionPanel(props: MissionPanelProps) {
   const {
     result, missionComplete, onToggleMission,
     riddleAnswer, setRiddleAnswer, riddleResult, isCheckingRiddle, onCheckRiddle,
     photoRallyPrompt, photoPreview, onPhotoSelect,
-    isVerifying, discoveryResult, onCreateStamp, onComplete,
+    isVerifying, discoveryResult, rallyComplete, onCreateStamp, onBackToResult, onComplete,
   } = props;
   const stampsComplete = missionComplete && discoveryResult !== null;
 
   return (
     <>
+      <button className="back-button" onClick={onBackToResult} type="button">
+        <ArrowLeft size={18} /> おみくじ結果に戻る
+      </button>
       <header className="tab-section-heading">
         <span>到着したら</span>
         <h2>企画の中で発見しよう</h2>
@@ -179,9 +185,11 @@ export default function MissionPanel(props: MissionPanelProps) {
       </div>
       {stampsComplete && (
         <button className="rally-next-button" onClick={onComplete} type="button">
-          <ArrowRight size={16} /> {copy.mission.completeCta}
+          <ArrowRight size={16} /> {rallyComplete ? copy.mission.completeCta : copy.mission.checkRewardCta}
         </button>
       )}
     </>
   );
 }
+
+export default memo(MissionPanel);

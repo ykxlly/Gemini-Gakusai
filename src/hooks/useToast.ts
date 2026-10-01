@@ -1,7 +1,7 @@
 // トースト通知（role=status の一文表示・3.6秒で自動消去）。
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 export function useToast() {
   const [toast, setToast] = useState("");
@@ -11,5 +11,5 @@ export function useToast() {
     window.setTimeout(() => setToast((current) => (current === message ? "" : current)), 3600);
   }, []);
 
-  return { toast, showToast };
+  return useMemo(() => ({ toast, showToast }), [toast, showToast]);
 }

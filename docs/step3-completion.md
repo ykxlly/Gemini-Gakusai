@@ -51,7 +51,19 @@ src/
 - [x] 配列上限: `summary` fortunes を最大20件、`chat` history を最大20件に制限（DoS/課金対策）。実行時は従来通り直近5/6件を使用。
 - [x] Supabase RLS: `supabase/rls_policies.sql` を新規作成（冪等）。anon/authenticated の全面拒否ポリシー、`claimed_at` 索引、監査列（`ip_hash/user_agent`）追加。アプリは service_role 経由のため動作に影響なし。
 
-## 4. 手動で実行が必要な作業
+## 5. シニア監査での構造修正（2026-10-01実施）
+
+- 再授与時の旧状態残留: `onDrawStart` を新設し授与開始時に discovery/memories を掃除（引き直し直後の印カウント矛盾を解消）。
+- 3/3完了時の遷移先誤り: `RallyProgress` 完了CTAは交換所（S3）へ、未完はミッション（S2）へ分岐。未完時のCTA文言は「交換所を確認する」に切替。
+- 通信の無限待機: `lib/api-client.ts` を新設し全フックにタイムアウト（15〜30秒）+ 429日本語化 + 安全なJSON解釈を適用。
+- 連打競合: 全非同期アクションにrefベースのin-flightガードを追加（state反映前の同一ティック連打を遮断）。
+- AI不定形JSON: `isDiscoveryResult` ガードで verify 応答を検証し、不正時は定型フォールバックへ。card/chat/summary/bookmark も型ガード＋定型文で縮退。
+- localStorage破損: キー単位のtry-catch＋形状検証（不正値は破棄し他キーの復元を継続）。
+- 写真まわり: dataURL構造ガード、同一ファイル再選択対応、EXIF Orientation反映（`createImageBitmap`、非対応時は従来経路）。
+- 再描画: 全shrineコンポーネントを `memo` 化し、フック戻り値・親ハンドラを `useMemo/useCallback` で安定化。チャット履歴は最新30件にキャップ。
+- その他: 紙吹雪IDの単調カウンタ化、授与中は思い出FABを非表示、S2に「おみくじ結果に戻る」を追加、タイマー群のアンマウント時クリア。
+- E2E smoke（実ブラウザ）: S0→S1（フォールバック）→S2手動達成→2/3表示→引き直し1/3リセット→Top復帰を通し、コンソールに新規エラーなし（502はダミー鍵による想定内、InvalidStateErrorは view-transition ガードで解消）。
+## 6. 手動で実行が必要な作業
 
 1. **Supabase で RLS 用 SQL を流す**（Dashboard > SQL Editor）:
    - `supabase/novelty_claims.sql`（未適用の場合のみ）

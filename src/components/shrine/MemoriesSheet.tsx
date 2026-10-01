@@ -4,19 +4,16 @@
 "use client";
 
 import { BookMarked, BookOpen, Images, MessageCircle, RefreshCw, Send, Share2, Volume2, Wand2, X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { copy } from "@/lib/copy";
-import type { DiscoveryCard, MemoryEntry, Result } from "@/lib/fortune";
+import { isValidHex, type DiscoveryCard, type MemoryEntry, type Result } from "@/lib/fortune";
 import type { HistoryEntry } from "@/hooks/usePersistentState";
 import type { useMemories } from "@/hooks/useMemories";
 
-function isValidHex(value: string) {
-  return /^#[0-9a-fA-F]{6}$/.test(value.trim());
-}
-
-export default function MemoriesSheet({
+function MemoriesSheet({
   open,
+  fabHidden,
   result,
   memories,
   discoveryCards,
@@ -27,6 +24,7 @@ export default function MemoriesSheet({
   onClose,
 }: {
   open: boolean;
+  fabHidden: boolean;
   result: Result | null;
   memories: MemoryEntry[];
   discoveryCards: DiscoveryCard[];
@@ -46,15 +44,17 @@ export default function MemoriesSheet({
 
   return (
     <>
-      <button
-        className="memories-fab"
-        onClick={onOpen}
-        type="button"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-      >
-        <BookMarked size={18} /> {copy.memories.open}
-      </button>
+      {!fabHidden && (
+        <button
+          className="memories-fab"
+          onClick={onOpen}
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+        >
+          <BookMarked size={18} /> {copy.memories.open}
+        </button>
+      )}
       {open && (
         <div className="memories-sheet-backdrop" onClick={onClose} aria-hidden="true" />
       )}
@@ -250,3 +250,5 @@ export default function MemoriesSheet({
     </>
   );
 }
+
+export default memo(MemoriesSheet);

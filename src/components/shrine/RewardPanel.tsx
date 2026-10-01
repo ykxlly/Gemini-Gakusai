@@ -3,10 +3,11 @@
 "use client";
 
 import { Check, Gift, RefreshCw } from "lucide-react";
+import { memo } from "react";
 import { copy } from "@/lib/copy";
 import type { NoveltyKind } from "@/lib/fortune";
 
-export default function RewardPanel({
+function RewardPanel({
   discoveryCount,
   claimedNovelties,
   latestClaim,
@@ -147,3 +148,5 @@ export default function RewardPanel({
     </section>
   );
 }
+
+export default memo(RewardPanel);

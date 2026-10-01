@@ -1,9 +1,10 @@
 // S0→S1: 入力3問 + おみくじ授与（POST /api/omikuji）。
 // 成功時は result を保持し、失敗時は公式データのフォールバックで継続する。
-// 親は onDrawn(result, isFallback) で履歴追加・画面遷移・演出を行う。
+// 親は onDrawStart（授与開始時の他フック掃除）と onDrawn（履歴・遷移・演出）を受け持つ。
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { apiPost } from "@/lib/api-client";
 import { copy } from "@/lib/copy";
 import { createFallbackResult, festivalSpots, type Result } from "@/lib/fortune";
 import { withViewTransition } from "@/lib/view-transition";
@@ -11,9 +12,9 @@ import { withViewTransition } from "@/lib/view-transition";
 export function useFortune(options: {
   previousSpot?: string;
   notify: (message: string) => void;
+  onDrawStart: () => void;
   onDrawn: (result: Result, isFallback: boolean) => void;
 }) {
-  const { notify, onDrawn } = options;
   const [formStep, setFormStep] = useState(0);
   const [mood, setMood] = useState("");
   const [goal, setGoal] = useState("");
@@ -29,12 +30,22 @@ export function useFortune(options: {
   const [rouletteSpot, setRouletteSpot] = useState(festivalSpots[0].name);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [selectionReaction, setSelectionReaction] = useState<{ message: string; motion: string; key: number } | null>(null);
+
   const reactionTimer = useRef<number | null>(null);
-  // onDrawn/notify を ref 経由で参照し、再生成なしで最新コールバックを使う。
-  const callbacks = useRef({ notify, onDrawn });
-  callbacks.current = { notify, onDrawn };
-  const previousSpotRef = useRef(options.previousSpot);
-  previousSpotRef.current = options.previousSpot;
+  // 連打ガード: state反映前の同一ティック連打をrefで同期的に遮断する。
+  const inFlight = useRef(false);
+  const timers = useRef<number[]>([]);
+  // 最新コールバック・入力値をref経由で参照し、アクションの再生成を抑える。
+  const callbacks = useRef(options);
+  callbacks.current = options;
+
+  const later = useCallback((fn: () => void, ms: number) => {
+    const id = window.setTimeout(() => {
+      fn();
+      timers.current = timers.current.filter((t) => t !== id);
+    }, ms);
+    timers.current.push(id);
+  }, []);
 
   const canSubmit = Boolean(mood && goal && companion && !isLoading);
   const selectionCount = [mood, goal, companion].filter(Boolean).length;
@@ -46,24 +57,30 @@ export function useFortune(options: {
         ? copy.top.mascotRemaining(3 - selectionCount)
         : copy.top.mascotIdle);
 
-  function reactToSelection(message: string, motion: string) {
-    if (reactionTimer.current) window.clearTimeout(reactionTimer.current);
-    setSelectionReaction({ message, motion, key: Date.now() });
-    reactionTimer.current = window.setTimeout(() => setSelectionReaction(null), 1100);
-  }
+  const reactToSelection = useCallback(
+    (message: string, motion: string) => {
+      if (reactionTimer.current) window.clearTimeout(reactionTimer.current);
+      setSelectionReaction({ message, motion, key: Date.now() });
+      reactionTimer.current = window.setTimeout(() => setSelectionReaction(null), 1100);
+    },
+    [],
+  );
 
-  function chooseAndAdvance(
-    setter: (value: string) => void,
-    value: string,
-    message: string,
-    motion: string,
-    nextStep: number,
-  ) {
-    setter(value);
-    reactToSelection(message, motion);
-    const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220;
-    window.setTimeout(() => setFormStep(nextStep), delay);
-  }
+  const chooseAndAdvance = useCallback(
+    (
+      setter: (value: string) => void,
+      value: string,
+      message: string,
+      motion: string,
+      nextStep: number,
+    ) => {
+      setter(value);
+      reactToSelection(message, motion);
+      const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220;
+      later(() => setFormStep(nextStep), delay);
+    },
+    [later, reactToSelection],
+  );
 
   useEffect(() => {
     if (!isLoading) {
@@ -93,37 +110,42 @@ export function useFortune(options: {
   useEffect(
     () => () => {
       if (reactionTimer.current) window.clearTimeout(reactionTimer.current);
+      timers.current.forEach((t) => window.clearTimeout(t));
     },
     [],
   );
 
-  async function requestFortune() {
-    const { notify: tell, onDrawn: drawn } = callbacks.current;
-    const previousSpot = previousSpotRef.current;
+  const requestFortune = useCallback(async () => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    const { notify: tell, onDrawn: drawn, onDrawStart: start } = callbacks.current;
+    const snapshot = {
+      mood,
+      goal,
+      companion,
+      mbti,
+      partnerMood,
+      previousSpot: callbacks.current.previousSpot,
+    };
     setError("");
     setIsPunching(true);
     setIsSuzuPulling(true);
-    window.setTimeout(() => setIsPunching(false), 380);
-    window.setTimeout(() => setIsSuzuPulling(false), 760);
+    later(() => setIsPunching(false), 380);
+    later(() => setIsSuzuPulling(false), 760);
     setIsLoading(true);
     setIsFallbackResult(false);
+    start();
     try {
-      const [response] = await Promise.all([
-        fetch("/api/omikuji", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mood,
-            goal,
-            companion,
-            mbti: mbti || undefined,
-            partnerMood: partnerMood || undefined,
-          }),
-        }),
+      const [data] = await Promise.all([
+        apiPost<Result>("/api/omikuji", {
+          mood: snapshot.mood,
+          goal: snapshot.goal,
+          companion: snapshot.companion,
+          mbti: snapshot.mbti || undefined,
+          partnerMood: snapshot.partnerMood || undefined,
+        }, { timeoutMs: 30_000, errorMessage: copy.result.error }),
         new Promise((resolve) => window.setTimeout(resolve, 1400)),
       ]);
-      if (!response.ok) throw new Error(copy.result.error);
-      const data = (await response.json()) as Result;
       setRouletteSpot(data.mission.target_spot);
       if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         await new Promise((resolve) => window.setTimeout(resolve, 620));
@@ -132,7 +154,7 @@ export function useFortune(options: {
       drawn(data, false);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (requestError) {
-      const fallback = createFallbackResult(goal, companion, previousSpot);
+      const fallback = createFallbackResult(snapshot.goal, snapshot.companion, snapshot.previousSpot);
       setRouletteSpot(fallback.mission.target_spot);
       setIsFallbackResult(true);
       withViewTransition(() => setResult(fallback));
@@ -141,35 +163,43 @@ export function useFortune(options: {
       drawn(fallback, true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
+      inFlight.current = false;
       setIsLoading(false);
     }
-  }
+  }, [later, mood, goal, companion, mbti, partnerMood]);
 
-  async function draw(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    await requestFortune();
-  }
+  const draw = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      await requestFortune();
+    },
+    [requestFortune],
+  );
 
-  function resetFortune() {
+  const resetFortune = useCallback(() => {
     setResult(null);
     setError("");
     setFormStep(0);
     setIsFallbackResult(false);
-  }
+  }, []);
 
-  function clearResultOnly() {
-    setResult(null);
-    setIsFallbackResult(false);
-  }
-
-  return {
-    formStep, setFormStep,
-    mood, setMood, goal, setGoal, companion, setCompanion,
-    mbti, setMbti, partnerMood, setPartnerMood,
-    result, setResult, isLoading, error, isFallbackResult,
-    isPunching, isSuzuPulling, rouletteSpot, loadingMessageIndex,
-    selectionReaction, selectionCount, mascotMessage, canSubmit,
-    reactToSelection, chooseAndAdvance,
-    requestFortune, draw, resetFortune, clearResultOnly,
-  };
+  return useMemo(
+    () => ({
+      formStep, setFormStep,
+      mood, setMood, goal, setGoal, companion, setCompanion,
+      mbti, setMbti, partnerMood, setPartnerMood,
+      result, setResult, isLoading, error, isFallbackResult,
+      isPunching, isSuzuPulling, rouletteSpot, loadingMessageIndex,
+      selectionReaction, selectionCount, mascotMessage, canSubmit,
+      reactToSelection, chooseAndAdvance,
+      requestFortune, draw, resetFortune,
+    }),
+    [
+      formStep, mood, goal, companion, mbti, partnerMood,
+      result, isLoading, error, isFallbackResult,
+      isPunching, isSuzuPulling, rouletteSpot, loadingMessageIndex,
+      selectionReaction, selectionCount, mascotMessage, canSubmit,
+      reactToSelection, chooseAndAdvance, requestFortune, draw, resetFortune,
+    ],
+  );
 }

@@ -3,12 +3,14 @@
 // MemoriesSheet の遅延表示時にのみ使うこと。
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { apiPost } from "@/lib/api-client";
 import type { HistoryEntry } from "@/hooks/usePersistentState";
 import type { MemoryEntry, Result } from "@/lib/fortune";
 
+const MAX_CHAT_TURNS = 30;
+
 export function useMemories(options: { result: Result | null; memories: MemoryEntry[]; history: HistoryEntry[] }) {
-  const { result, memories, history } = options;
   const [bookmark, setBookmark] = useState<{ title: string; closingComment: string } | null>(null);
   const [isCreatingBookmark, setIsCreatingBookmark] = useState(false);
   const [card, setCard] = useState<{ phrase: string; accentHex: string } | null>(null);
@@ -21,105 +23,144 @@ export function useMemories(options: { result: Result | null; memories: MemoryEn
   const [summaryText, setSummaryText] = useState("");
   const [isSummarizing, setIsSummarizing] = useState(false);
 
-  function resetMemories() {
+  const busyRef = useRef({ card: false, narration: false, chat: false, summary: false, bookmark: false });
+  const live = useRef(options);
+  live.current = options;
+  const chatRef = useRef(chatMessages);
+  chatRef.current = chatMessages;
+
+  const resetMemories = useCallback(() => {
+    busyRef.current = { card: false, narration: false, chat: false, summary: false, bookmark: false };
     setBookmark(null);
+    setIsCreatingBookmark(false);
     setCard(null);
+    setIsGeneratingCard(false);
     setNarrationUrl(null);
+    setIsNarrating(false);
     setChatMessages([]);
     setChatInput("");
+    setIsChatting(false);
     setSummaryText("");
-  }
+    setIsSummarizing(false);
+  }, []);
 
-  async function generateCard(notify: (message: string) => void) {
-    if (!result || isGeneratingCard) return;
-    setIsGeneratingCard(true);
-    try {
-      const response = await fetch("/api/omikuji/card", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fortuneName: result.fortune_name,
-          color: result.lucky_elements.color,
-          spot: result.mission.target_spot,
-        }),
-      });
-      if (!response.ok) throw new Error("card failed");
-      const data = (await response.json()) as { phrase: string; accent_hex: string };
-      setCard({ phrase: data.phrase, accentHex: data.accent_hex });
-    } catch {
-      setCard({ phrase: `${result.mission.target_spot}で、今日だけの発見を。`, accentHex: "#d83a2e" });
-      notify("お守りカードを作りました");
-    } finally {
-      setIsGeneratingCard(false);
-    }
-  }
+  const generateCard = useCallback(
+    async (notify: (message: string) => void) => {
+      const { result } = live.current;
+      if (!result || busyRef.current.card) return;
+      busyRef.current.card = true;
+      setIsGeneratingCard(true);
+      try {
+        const data = await apiPost<{ phrase: unknown; accent_hex: unknown }>(
+          "/api/omikuji/card",
+          {
+            fortuneName: result.fortune_name,
+            color: result.lucky_elements.color,
+            spot: result.mission.target_spot,
+          },
+          { timeoutMs: 20_000, errorMessage: "お守りカードの生成に失敗しました。" },
+        );
+        setCard({
+          phrase:
+            typeof data.phrase === "string" && data.phrase
+              ? data.phrase
+              : `${result.mission.target_spot}で、今日だけの発見を。`,
+          accentHex: typeof data.accent_hex === "string" ? data.accent_hex : "#d83a2e",
+        });
+      } catch {
+        setCard({ phrase: `${result.mission.target_spot}で、今日だけの発見を。`, accentHex: "#d83a2e" });
+        notify("お守りカードを作りました");
+      } finally {
+        busyRef.current.card = false;
+        setIsGeneratingCard(false);
+      }
+    },
+    [],
+  );
 
-  async function playNarration(notify: (message: string) => void) {
-    if (!result || isNarrating) return;
+  const playNarration = useCallback(async (notify: (message: string) => void) => {
+    const { result } = live.current;
+    if (!result || busyRef.current.narration) return;
+    busyRef.current.narration = true;
     setIsNarrating(true);
     try {
-      const response = await fetch("/api/omikuji/narrate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: result.message }),
+      const data = await apiPost<{ audio: unknown }>("/api/omikuji/narrate", { text: result.message }, {
+        timeoutMs: 30_000,
+        errorMessage: "音声の生成に失敗しました。",
       });
-      if (!response.ok) throw new Error("narrate failed");
-      const data = (await response.json()) as { audio: string };
+      if (typeof data.audio !== "string" || !data.audio) throw new Error("音声の生成に失敗しました。");
       setNarrationUrl(data.audio);
     } catch (narrationRequestError) {
       notify(narrationRequestError instanceof Error ? narrationRequestError.message : "通信エラーが発生しました。");
     } finally {
+      busyRef.current.narration = false;
       setIsNarrating(false);
     }
-  }
+  }, []);
 
-  async function sendChatMessage(message: string, notify: (text: string) => void) {
-    const text = message.trim();
-    if (!text || !result || isChatting) return;
-    setIsChatting(true);
-    const nextMessages: { role: "user" | "model"; text: string }[] = [...chatMessages, { role: "user" as const, text }];
-    setChatMessages(nextMessages);
-    setChatInput("");
-    try {
-      const response = await fetch("/api/omikuji/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text,
-          history: nextMessages.slice(-6).map((entry) => ({ role: entry.role, text: entry.text })),
-          fortuneName: result.fortune_name,
-          missionTitle: result.mission.title,
-        }),
-      });
-      if (!response.ok) throw new Error("chat failed");
-      const data = (await response.json()) as { reply: string };
-      setChatMessages([...nextMessages, { role: "model", text: data.reply }]);
-    } catch {
-      setChatMessages([
-        ...nextMessages,
-        { role: "model", text: `「${result.mission.target_spot}」を目指してみよう！会場案内や企画の詳細は現地表示も確認してね。` },
-      ]);
-      notify("案内モードで返信しました");
-    } finally {
-      setIsChatting(false);
-    }
-  }
+  const sendChatMessage = useCallback(
+    async (message: string, notify: (text: string) => void) => {
+      const { result } = live.current;
+      const text = message.trim();
+      if (!text || !result || busyRef.current.chat) return;
+      busyRef.current.chat = true;
+      setIsChatting(true);
+      const nextMessages = [...chatRef.current, { role: "user" as const, text }].slice(-MAX_CHAT_TURNS);
+      setChatMessages(nextMessages);
+      setChatInput("");
+      try {
+        const data = await apiPost<{ reply: unknown }>(
+          "/api/omikuji/chat",
+          {
+            message: text,
+            history: nextMessages.slice(0, -1).slice(-6).map((entry) => ({ role: entry.role, text: entry.text })),
+            fortuneName: result.fortune_name,
+            missionTitle: result.mission.title,
+          },
+          { timeoutMs: 30_000, errorMessage: "返信の取得に失敗しました。" },
+        );
+        const reply =
+          typeof data.reply === "string" && data.reply
+            ? data.reply
+            : `「${result.mission.target_spot}」を目指してみよう！会場案内や企画の詳細は現地表示も確認してね。`;
+        setChatMessages((current) => [...current, { role: "model" as const, text: reply }].slice(-MAX_CHAT_TURNS));
+      } catch (error) {
+        setChatMessages((current) =>
+          [
+            ...current,
+            { role: "model" as const, text: `「${result.mission.target_spot}」を目指してみよう！会場案内や企画の詳細は現地表示も確認してね。` },
+          ].slice(-MAX_CHAT_TURNS),
+        );
+        notify(error instanceof Error ? error.message : "案内モードで返信しました");
+      } finally {
+        busyRef.current.chat = false;
+        setIsChatting(false);
+      }
+    },
+    [],
+  );
 
-  async function createBookmark(notify: (message: string) => void) {
-    if (!result || memories.length === 0 || isCreatingBookmark) return;
+  const createBookmark = useCallback(async (notify: (message: string) => void) => {
+    const { result, memories } = live.current;
+    if (!result || memories.length === 0 || busyRef.current.bookmark) return;
+    busyRef.current.bookmark = true;
     setIsCreatingBookmark(true);
     try {
-      const response = await fetch("/api/omikuji/bookmark", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const data = await apiPost<{ title: unknown; closing_comment: unknown }>(
+        "/api/omikuji/bookmark",
+        {
           fortuneName: result.fortune_name,
           memories: memories.map(({ caption, spot, area }) => ({ caption, spot, area })),
-        }),
+        },
+        { timeoutMs: 20_000, errorMessage: "しおりを作れませんでした。" },
+      );
+      setBookmark({
+        title: typeof data.title === "string" && data.title ? data.title : "今日の寄り道しおり",
+        closingComment:
+          typeof data.closing_comment === "string" && data.closing_comment
+            ? data.closing_comment
+            : "今日見つけた小さな発見が、きっと次の楽しい寄り道につながります。",
       });
-      if (!response.ok) throw new Error("bookmark failed");
-      const data = (await response.json()) as { title: string; closing_comment: string };
-      setBookmark({ title: data.title, closingComment: data.closing_comment });
     } catch {
       setBookmark({
         title: "今日の寄り道しおり",
@@ -127,11 +168,13 @@ export function useMemories(options: { result: Result | null; memories: MemoryEn
       });
       notify("思い出しおりを作りました");
     } finally {
+      busyRef.current.bookmark = false;
       setIsCreatingBookmark(false);
     }
-  }
+  }, []);
 
-  async function exportBookmark() {
+  const exportBookmark = useCallback(async () => {
+    const { result, memories } = live.current;
     if (!bookmark || !result) return;
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
@@ -206,36 +249,51 @@ export function useMemories(options: { result: Result | null; memories: MemoryEn
     anchor.download = file.name;
     anchor.click();
     URL.revokeObjectURL(url);
-  }
+  }, [bookmark]);
 
-  async function fetchSummary(notify: (message: string) => void) {
-    if (history.length < 2 || isSummarizing) return;
+  const fetchSummary = useCallback(async (notify: (message: string) => void) => {
+    const { history } = live.current;
+    if (history.length < 2 || busyRef.current.summary) return;
+    busyRef.current.summary = true;
     setIsSummarizing(true);
     try {
-      const response = await fetch("/api/omikuji/summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fortunes: history }),
-      });
-      if (!response.ok) throw new Error("summary failed");
-      const data = (await response.json()) as { summary: string };
-      setSummaryText(data.summary);
+      const data = await apiPost<{ summary: unknown }>(
+        "/api/omikuji/summary",
+        { fortunes: history },
+        { timeoutMs: 30_000, errorMessage: "まとめの生成に失敗しました。" },
+      );
+      setSummaryText(
+        typeof data.summary === "string" && data.summary
+          ? data.summary
+          : `今日は${history.length}回の寄り道を楽しみました。気になった企画へ向かった一歩が、今日だけの思い出になっています。`,
+      );
     } catch {
       setSummaryText(
         `今日は${history.length}回の寄り道を楽しみました。気になった企画へ向かった一歩が、今日だけの思い出になっています。`,
       );
       notify("今日のまとめを作りました");
     } finally {
+      busyRef.current.summary = false;
       setIsSummarizing(false);
     }
-  }
+  }, []);
 
-  return {
-    bookmark, isCreatingBookmark, createBookmark, exportBookmark,
-    card, isGeneratingCard, generateCard,
-    narrationUrl, isNarrating, playNarration,
-    chatMessages, chatInput, setChatInput, isChatting, sendChatMessage,
-    summaryText, isSummarizing, fetchSummary,
-    resetMemories,
-  };
+  return useMemo(
+    () => ({
+      bookmark, isCreatingBookmark, createBookmark, exportBookmark,
+      card, isGeneratingCard, generateCard,
+      narrationUrl, isNarrating, playNarration,
+      chatMessages, chatInput, setChatInput, isChatting, sendChatMessage,
+      summaryText, isSummarizing, fetchSummary,
+      resetMemories,
+    }),
+    [
+      bookmark, isCreatingBookmark, createBookmark, exportBookmark,
+      card, isGeneratingCard, generateCard,
+      narrationUrl, isNarrating, playNarration,
+      chatMessages, chatInput, isChatting, sendChatMessage,
+      summaryText, isSummarizing, fetchSummary,
+      resetMemories,
+    ],
+  );
 }

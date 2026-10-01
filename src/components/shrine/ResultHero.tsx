@@ -5,6 +5,7 @@
 import { ArrowLeft, MapPin, RefreshCw, Share2, Star } from "lucide-react";
 import Image from "next/image";
 import type { CSSProperties } from "react";
+import { memo } from "react";
 import RallyProgress from "@/components/shrine/RallyProgress";
 import { copy } from "@/lib/copy";
 import { getLocationPoint, type FestivalSpot, type Result } from "@/lib/fortune";
@@ -16,7 +17,7 @@ function getFortuneNameSize(name: string) {
   return "fortune-name-short";
 }
 
-export default function ResultHero({
+function ResultHero({
   result,
   isFallbackResult,
   missionSpot,
@@ -210,3 +211,5 @@ export default function ResultHero({
     </>
   );
 }
+
+export default memo(ResultHero);

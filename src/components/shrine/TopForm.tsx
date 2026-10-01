@@ -5,6 +5,7 @@
 import { ArrowLeft, ArrowRight, Check, RefreshCw, Star } from "lucide-react";
 import Image from "next/image";
 import type { FormEvent } from "react";
+import { memo } from "react";
 import { copy } from "@/lib/copy";
 import { companions, goals, mbtiTypes, moods, type Choice } from "@/lib/fortune";
 
@@ -79,7 +80,7 @@ export type TopFormProps = {
   draw: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-export default function TopForm(props: TopFormProps) {
+function TopForm(props: TopFormProps) {
   const {
     formStep, setFormStep, mood, goal, companion, mbti, partnerMood,
     setMbti, setPartnerMood, selectionCount, mascotMessage, selectionReaction,
@@ -360,3 +361,5 @@ export default function TopForm(props: TopFormProps) {
     </div>
   );
 }
+
+export default memo(TopForm);

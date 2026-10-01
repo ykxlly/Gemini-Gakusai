@@ -2,10 +2,11 @@
 "use client";
 
 import Image from "next/image";
+import { memo } from "react";
 import type { ConfettiPiece } from "@/hooks/useCelebration";
 import { copy } from "@/lib/copy";
 
-export function SiteHeader() {
+function SiteHeaderInner() {
   return (
     <header className="site-header">
       <a className="brand" href="#top" aria-label={`${copy.site.title} トップ`}>
@@ -23,7 +24,7 @@ export function SiteHeader() {
   );
 }
 
-export function SiteFooter() {
+function SiteFooterInner() {
   return (
     <footer>
       {copy.site.title} <span>·</span> 学園祭を楽しむためのエンターテインメントです
@@ -31,7 +32,7 @@ export function SiteFooter() {
   );
 }
 
-export function Toast({ message }: { message: string }) {
+function ToastInner({ message }: { message: string }) {
   if (!message) return null;
   return (
     <div aria-live="polite" className="toast" role="status">
@@ -40,7 +41,7 @@ export function Toast({ message }: { message: string }) {
   );
 }
 
-export function ConfettiLayer({ pieces }: { pieces: ConfettiPiece[] }) {
+function ConfettiLayerInner({ pieces }: { pieces: ConfettiPiece[] }) {
   if (pieces.length === 0) return null;
   return (
     <div className="confetti-layer" aria-hidden="true">
@@ -59,3 +60,8 @@ export function ConfettiLayer({ pieces }: { pieces: ConfettiPiece[] }) {
     </div>
   );
 }
+
+export const SiteHeader = memo(SiteHeaderInner);
+export const SiteFooter = memo(SiteFooterInner);
+export const Toast = memo(ToastInner);
+export const ConfettiLayer = memo(ConfettiLayerInner);
