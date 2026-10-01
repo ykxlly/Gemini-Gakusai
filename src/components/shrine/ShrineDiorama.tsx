@@ -31,6 +31,7 @@ function ShrineDiorama({ isSuzuPulling, selectionCount, selectionReaction, masco
           unoptimized
         />
         <div className="diorama-veil" aria-hidden="true" />
+        <div className="diorama-shadow" aria-hidden="true" />
         <div className="mascot-visual">
           <Image
             alt="寄り道おみくじの案内キャラクター"

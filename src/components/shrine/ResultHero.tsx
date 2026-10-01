@@ -172,7 +172,7 @@ function ResultHero({
           <Star size={14} fill="currentColor" /> 今日の御神籤
         </div>
         <p>三つの印を納めたあなたへ</p>
-        <h1 aria-label={result.fortune_name} className={getFortuneNameSize(result.fortune_name)}>
+        <h1 aria-label={result.fortune_name} className={`fortune-vertical ${getFortuneNameSize(result.fortune_name)}`}>
           {Array.from(result.fortune_name).map((char, index) => (
             <span aria-hidden="true" className="fortune-char" key={index} style={{ "--i": index } as CSSProperties}>
               {char === " " ? "\u00A0" : char}
@@ -183,7 +183,7 @@ function ResultHero({
           <Star size={18} fill="currentColor" /> 授与済
         </div>
       </div>
-      <blockquote>{result.message}</blockquote>
+      <blockquote className="washi-slip">{result.message}</blockquote>
       <aside className="lucky-summary">
         <span>今日のラッキー</span>
         <strong>{result.lucky_elements.color}</strong>
