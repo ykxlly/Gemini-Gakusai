@@ -953,9 +953,6 @@ body {
 .suzu-pulling-stage .suzu-rope {
   animation: suzu-rope-pull .76s cubic-bezier(.22, 1, .36, 1) both;
 }
-.suzu-pulling-stage .torii-mark {
-  animation: torii-glow .76s ease-out both;
-}
 @keyframes shrine-stage-pull {
   0%, 100% { transform: translate3d(0, 0, 0); }
   28% { transform: translate3d(0, 4px, 0); }
@@ -966,10 +963,6 @@ body {
   35% { transform: rotate(-8deg) translateY(18px); }
   62% { transform: rotate(7deg) translateY(-5px); }
   100% { transform: rotate(4deg) translateY(0); }
-}
-@keyframes torii-glow {
-  0%, 100% { opacity: .18; filter: none; }
-  35% { opacity: .5; filter: drop-shadow(0 0 8px rgba(216, 58, 46, .45)); }
 }
 .omikuji-reveal-card {
   animation: omikuji-card-reveal .8s cubic-bezier(.16, 1, .3, 1) both;
@@ -1015,7 +1008,6 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .suzu-pulling-stage,
   .suzu-pulling-stage .suzu-rope,
-  .suzu-pulling-stage .torii-mark,
   .omikuji-reveal-card,
   .result-paper-kicker,
   .result-heading .result-sparkle,
@@ -1224,53 +1216,19 @@ body {
     linear-gradient(135deg, rgba(255, 255, 255, .52), rgba(239, 232, 215, .82));
   box-shadow: inset 0 -18px 0 rgba(184, 59, 47, .04);
 }
-.torii-mark {
-  position: absolute;
-  z-index: 1;
-  bottom: 18px;
-  left: 30%;
-  width: 88px;
-  height: 82px;
-  transform: translateX(-50%);
-  opacity: .15;
+.diorama-bg {
+  object-fit: cover;
+  object-position: center 30%;
   pointer-events: none;
 }
-.torii-mark::before,
-.torii-mark::after {
-  content: "";
+.diorama-veil {
   position: absolute;
-  background: var(--vermilion);
-}
-.torii-mark::before {
-  top: 0;
-  left: -9px;
-  width: 106px;
-  height: 8px;
-  border-radius: 50%;
-}
-.torii-mark::after {
-  top: 11px;
-  left: 0;
-  width: 88px;
-  height: 5px;
-}
-.torii-mark span,
-.torii-mark i {
-  position: absolute;
-  top: 13px;
-  width: 8px;
-  height: 69px;
-  background: var(--vermilion);
-}
-.torii-mark span { left: 9px; }
-.torii-mark i { right: 9px; }
-.torii-mark b {
-  position: absolute;
-  top: 35px;
-  left: 8px;
-  width: 72px;
-  height: 4px;
-  background: var(--vermilion);
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(23, 23, 20, .28), rgba(23, 23, 20, .12) 45%, rgba(23, 23, 20, .34)),
+    rgba(64, 42, 20, .14);
+  pointer-events: none;
 }
 .suzu-rope {
   position: absolute;

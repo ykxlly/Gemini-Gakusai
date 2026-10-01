@@ -19,11 +19,17 @@ function ShrineDiorama({ isSuzuPulling, selectionCount, selectionReaction, masco
       <div
         className={`mascot-stage shrine-stage diorama ${isSuzuPulling ? "suzu-pulling-stage" : ""} mascot-progress-${selectionCount} ${selectionReaction ? `mascot-${selectionReaction.motion}` : ""}`}
       >
-        <div className="torii-mark" aria-hidden="true">
-          <span />
-          <i />
-          <b />
-        </div>
+        <Image
+          alt=""
+          aria-hidden="true"
+          className="diorama-bg"
+          fill
+          priority
+          sizes="(max-width: 428px) 100vw, 428px"
+          src="/shrine-bg.png"
+          unoptimized
+        />
+        <div className="diorama-veil" aria-hidden="true" />
         <div className="mascot-visual">
           <Image
             alt="寄り道おみくじの案内キャラクター"
