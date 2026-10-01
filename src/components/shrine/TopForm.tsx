@@ -115,7 +115,7 @@ function TopForm(props: TopFormProps) {
             <b />
           </div>
           <div className="booth-sign" aria-hidden="true">
-            {copy.site.shrineName} {copy.site.boothLabel} <span>一</span>
+            {copy.site.shrineName} {copy.site.boothLabel}
           </div>
           <div className="mascot-visual">
             <Image

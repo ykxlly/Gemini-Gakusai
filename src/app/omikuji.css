@@ -49,14 +49,13 @@ input[type="text"], input[type="password"], select { font-size: 16px; }
 .mascot-stage::before { content: ""; position: absolute; z-index: 0; background: var(--red); opacity: .9; }
 .mascot-stage::before { width: 100%; height: 5px; left: 0; top: 0; }
 .booth-sign { position: absolute; z-index: 3; top: 15px; left: 14px; color: var(--ink); font-size: 10.5px; font-weight: 900; letter-spacing: .16em; }
-.booth-sign span { margin-left: 7px; padding: 3px 5px; background: var(--red); color: white; letter-spacing: 0; }
 .mascot-visual { position: absolute; width: 100%; left: 50%; bottom: -7%; transform: translateX(-50%); animation: mascot-idle 3.6s ease-in-out infinite; }
 .mascot-image { position: static; display: block; width: 100%; height: auto; }
 .eye-glint { position: absolute; width: 3.6%; aspect-ratio: 1; left: 45%; top: 35%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.95), rgba(255,255,255,0) 70%); transform: translate(calc(-50% + var(--ex, 0) * 1px), calc(-50% + var(--ey, 0) * 1px)); transition: transform .12s ease-out; mix-blend-mode: screen; pointer-events: none; }
 .eye-glint-right { left: 55%; }
 .stage-sparkle { position: absolute; object-fit: contain; animation: sparkle-pulse 3.4s ease-in-out infinite; }
-.stage-sparkle-large { width: 72px; height: 72px; right: 5%; top: 17%; }
-.stage-sparkle-small { width: 35px; height: 35px; left: 13%; top: 43%; animation-delay: -1.2s; }
+.stage-sparkle-large { width: 72px; height: 72px; left: 68%; top: 6%; }
+.stage-sparkle-small { width: 35px; height: 35px; left: auto; right: 5%; top: auto; bottom: 8%; animation-delay: -1.2s; }
 .mascot-caption { position: absolute; z-index: 3; left: 0; bottom: 12px; padding: 6px 9px; background: var(--ink); color: white; font-size: 11.5px; font-weight: 800; }
 .mascot-progress-1 .mascot-visual { animation: mascot-react 3.6s ease-in-out infinite; }
 .mascot-progress-2 .mascot-visual { animation: mascot-react-more 3.2s ease-in-out infinite; }
@@ -605,7 +604,6 @@ body { background: #e9e2d5; font-family: var(--font-sans); }
 .mascot-stage { height: 248px; border: 0; border-radius: 24px; background: linear-gradient(145deg, #fff7dc, #f6e7cf); box-shadow: inset 0 0 0 1px rgba(116,91,54,.1); }
 .mascot-stage::before { height: 0; }
 .booth-sign { top: 18px; left: 18px; color: #756c5f; letter-spacing: .1em; }
-.booth-sign span { border-radius: 999px; background: var(--red); }
 .mascot-caption { left: 14px; bottom: 14px; border-radius: 999px; box-shadow: 0 5px 16px rgba(23,23,20,.12); }
 .privacy-note { margin-top: 14px; padding: 11px 14px; border-radius: 12px; background: rgba(255,255,255,.56); }
 .form-panel { padding-top: 34px; }
@@ -1234,13 +1232,14 @@ body {
 }
 .torii-mark {
   position: absolute;
-  z-index: 2;
-  top: 30px;
+  z-index: 1;
+  top: 22px;
   left: 50%;
   width: 88px;
   height: 82px;
   transform: translateX(-50%);
-  opacity: .18;
+  opacity: .15;
+  pointer-events: none;
 }
 .torii-mark::before,
 .torii-mark::after {
