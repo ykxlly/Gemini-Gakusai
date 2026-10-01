@@ -62,7 +62,6 @@ function ShrineDiorama({ isSuzuPulling, selectionCount, selectionReaction, masco
           unoptimized
           width={38}
         />
-        <div className="diorama-ground" aria-hidden="true" />
       </div>
       <span className="mascot-caption" aria-live="polite" key={selectionReaction?.key || "idle"}>
         {mascotMessage}
