@@ -1221,25 +1221,10 @@ body {
   font-size: 11px;
   letter-spacing: .08em;
 }
-.shrine-counter-rope {
-  position: relative;
-  width: 34px;
-  height: 28px;
-  border: 2px solid #c79945;
-  border-top: 0;
-  border-radius: 0 0 50% 50%;
+.shrine-counter-icon {
+  flex: none;
+  color: #c79945;
 }
-.shrine-counter-rope::before,
-.shrine-counter-rope::after {
-  content: "";
-  position: absolute;
-  top: -3px;
-  width: 4px;
-  height: 31px;
-  background: #c79945;
-}
-.shrine-counter-rope::before { left: 6px; }
-.shrine-counter-rope::after { right: 6px; }
 .shrine-stage {
   border-color: rgba(184, 59, 47, .5);
   background:

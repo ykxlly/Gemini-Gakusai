@@ -2,7 +2,7 @@
 // S0 Top: 神社イントロ + 3ステップ回答フォーム。
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, RefreshCw, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bell, Check, RefreshCw, Star } from "lucide-react";
 import Image from "next/image";
 import type { FormEvent } from "react";
 import { memo } from "react";
@@ -92,7 +92,7 @@ function TopForm(props: TopFormProps) {
     <div className="input-layout" id="top">
       <section className="intro-panel">
         <div className="shrine-counter-intro">
-          <span className="shrine-counter-rope" aria-hidden="true" />
+          <Bell aria-hidden="true" className="shrine-counter-icon" size={24} />
           <div>
             <strong>{copy.site.shrineName}</strong>
             <small>今日の運勢を授かる場所</small>
