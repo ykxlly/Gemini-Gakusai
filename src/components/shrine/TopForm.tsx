@@ -3,9 +3,9 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, Bell, Check, RefreshCw, Star } from "lucide-react";
-import Image from "next/image";
 import type { FormEvent } from "react";
 import { memo } from "react";
+import ShrineDiorama from "@/components/shrine/ShrineDiorama";
 import { copy } from "@/lib/copy";
 import { companions, goals, mbtiTypes, moods, type Choice } from "@/lib/fortune";
 
@@ -106,53 +106,12 @@ function TopForm(props: TopFormProps) {
           授かろう
         </h1>
         <p>{copy.top.lead}</p>
-        <div
-          className={`mascot-stage shrine-stage ${isSuzuPulling ? "suzu-pulling-stage" : ""} mascot-progress-${selectionCount} ${selectionReaction ? `mascot-${selectionReaction.motion}` : ""}`}
-        >
-          <div className="torii-mark" aria-hidden="true">
-            <span />
-            <i />
-            <b />
-          </div>
-          <div className="booth-sign" aria-hidden="true">
-            {copy.site.shrineName} {copy.site.boothLabel}
-          </div>
-          <div className="mascot-visual">
-            <Image
-              alt="寄り道おみくじの案内キャラクター"
-              className="mascot-image"
-              height={390}
-              priority
-              src="/mascot-clean.png"
-              unoptimized
-              width={760}
-            />
-            <span aria-hidden="true" className="eye-glint eye-glint-left" />
-            <span aria-hidden="true" className="eye-glint eye-glint-right" />
-          </div>
-          <Image
-            alt=""
-            className="stage-sparkle stage-sparkle-large"
-            height={78}
-            src="/sparkle-clean.png"
-            unoptimized
-            width={78}
-          />
-          <Image
-            alt=""
-            className="stage-sparkle stage-sparkle-small"
-            height={38}
-            src="/sparkle-clean.png"
-            unoptimized
-            width={38}
-          />
-          <span className="suzu-rope" aria-hidden="true">
-            <i />
-          </span>
-          <span className="mascot-caption" aria-live="polite" key={selectionReaction?.key || "idle"}>
-            {mascotMessage}
-          </span>
-        </div>
+        <ShrineDiorama
+          isSuzuPulling={isSuzuPulling}
+          selectionCount={selectionCount}
+          selectionReaction={selectionReaction}
+          mascotMessage={mascotMessage}
+        />
         <div className="privacy-note">
           <Check size={16} /> {copy.top.privacyNote}
         </div>
