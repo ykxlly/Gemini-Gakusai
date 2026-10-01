@@ -657,16 +657,13 @@ body { font-size: var(--text-body); }
 .draw-progress-heading { display: flex; align-items: center; justify-content: space-between; color: var(--vermilion); font-family: var(--font-display); font-size: 11.5px; letter-spacing: .1em; }
 .draw-progress-heading strong { font-family: var(--font-sans); font-size: 11px; letter-spacing: .04em; }
 .draw-progress-marks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-.draw-progress-marks > span { position: relative; display: flex; align-items: center; gap: 6px; color: #9d9588; font-size: 11px; }
-.draw-progress-marks > span:not(:last-child)::after { content: ""; position: absolute; top: 11px; left: 27px; right: -5px; height: 1px; background: #d8cdbd; }
-.draw-progress-marks i { position: relative; z-index: 1; width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid #c7bbab; border-radius: 50%; background: #fffaf0; color: #8e8575; font-family: var(--font-display); font-size: 10.5px; font-style: normal; }
+.draw-progress-marks > span { display: flex; align-items: center; gap: 6px; color: #9d9588; font-size: 11px; }
+.draw-progress-marks i { width: 8px; height: 8px; border-radius: 50%; background: #ddd2bd; font-style: normal; }
 .draw-progress-marks small { font-size: 11px; white-space: nowrap; }
-.draw-progress-mark-filled { color: var(--vermilion) !important; }
-.draw-progress-mark-filled i { border-color: var(--vermilion); background: var(--vermilion); color: white; box-shadow: 0 0 0 3px rgba(184, 59, 47, .1); animation: mark-stamp .32s cubic-bezier(.34, 1.56, .64, 1) both; }
-.draw-progress-mark-filled:not(:last-child)::after { background: var(--vermilion) !important; opacity: .55; }
+.draw-progress-mark-filled { color: var(--vermilion); }
+.draw-progress-mark-filled i { background: var(--vermilion); box-shadow: 0 0 0 3px rgba(184, 59, 47, .12); }
 .draw-progress p { margin: 9px 0 0; color: #71695e; font-size: 11.5px; line-height: 1.5; }
 .draw-progress-complete { border-color: rgba(184, 59, 47, .5); background: #fff3e8; transform: translateY(-2px); }
-@keyframes mark-stamp { from { opacity: 0; transform: scale(1.7) rotate(-10deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
 
 .form-panel { padding-top: 28px; }
 .form-heading { margin-bottom: 16px; }
@@ -996,13 +993,6 @@ body {
 @keyframes seal-stamp {
   0% { opacity: 0; transform: scale(1.55) rotate(-14deg); }
   70% { opacity: 1; transform: scale(.94) rotate(5deg); }
-  100% { opacity: 1; transform: scale(1) rotate(0); }
-}
-.draw-progress-mark-filled i {
-  animation: mark-ink .45s cubic-bezier(.34, 1.56, .64, 1) both;
-}
-@keyframes mark-ink {
-  0% { opacity: 0; transform: scale(.3) rotate(-22deg); }
   100% { opacity: 1; transform: scale(1) rotate(0); }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -127,7 +127,7 @@ function TopForm(props: TopFormProps) {
             {[copy.top.questions.mood, copy.top.questions.goal, copy.top.questions.companion].map(
               (label, index) => (
                 <span className={selectionCount > index ? "draw-progress-mark-filled" : ""} key={label}>
-                  <i>{selectionCount > index ? "印" : index + 1}</i>
+                  <i />
                   <small>{label}</small>
                 </span>
               ),
