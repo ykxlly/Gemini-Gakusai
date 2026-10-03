@@ -143,31 +143,49 @@ function scoreSpot(spot: FestivalSpot, mood: string, goal: string, companion: st
 }
 
 // 重み付きでおすすめ1件＋代案2件を選ぶ。上位候補の中からランダムなので、
-// 同じ入力でも毎回違う場所が出る。直前のスポットは除外して単調さを防ぐ。
+// 同じ入力でも毎回違う場所が出る。同点スコアの企画はグループ内でシャッフルして
+// 「常に同じ並びの上位だけが残る」偏りを防ぐ。直前のスポットは除外。
+function shuffle<T>(items: T[]): T[] {
+  const result = [...items];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [result[index], result[swap]] = [result[swap], result[index]];
+  }
+  return result;
+}
+
 export function pickRecommendedSpots(
   mood: string,
   goal: string,
   companion: string,
   previousSpot?: string,
 ): { recommendation: FestivalSpot; alternatives: FestivalSpot[] } {
-  const ranked = festivalSpots
+  const scored = festivalSpots
     .filter((spot) => spot.name !== previousSpot)
-    .map((spot) => ({ spot, score: scoreSpot(spot, mood, goal, companion) }))
-    .sort((a, b) => b.score - a.score);
+    .map((spot) => ({ spot, score: scoreSpot(spot, mood, goal, companion) }));
 
-  const topPool = ranked.slice(0, Math.min(6, ranked.length)).map((entry) => entry.spot);
-  const shuffled = [...topPool];
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swap = Math.floor(Math.random() * (index + 1));
-    [shuffled[index], shuffled[swap]] = [shuffled[swap], shuffled[index]];
+  // スコア降順。同点グループ内はシャッフルしてタイの偏りをなくす。
+  scored.sort((a, b) => b.score - a.score);
+  const pool: FestivalSpot[] = [];
+  let cursor = 0;
+  while (cursor < scored.length && pool.length < 6) {
+    let groupEnd = cursor;
+    while (groupEnd < scored.length && scored[groupEnd].score === scored[cursor].score) groupEnd += 1;
+    for (const entry of shuffle(scored.slice(cursor, groupEnd))) {
+      if (pool.length < 6) pool.push(entry.spot);
+    }
+    cursor = groupEnd;
   }
 
+  const shuffled = shuffle(pool);
   const recommendation = shuffled[0] || festivalSpots[0];
   const alternatives = shuffled.slice(1, 3);
   while (alternatives.length < 2) {
-    const filler = ranked.find((entry) => entry.spot.name !== recommendation.name && !alternatives.some((alt) => alt.name === entry.spot.name));
+    const filler = festivalSpots.find(
+      (spot) => spot.name !== recommendation.name && !alternatives.some((alt) => alt.name === spot.name),
+    );
     if (!filler) break;
-    alternatives.push(filler.spot);
+    alternatives.push(filler);
   }
   return { recommendation, alternatives };
 }
