@@ -76,12 +76,3 @@ export async function generateWithAIFallback({ gemini, geminiRequest, groqMessag
   return { text, provider: "groq" as const };
 }
 
-export function groqImageMessage(prompt: string, base64: string, mimeType: string): GroqMessage {
-  return {
-    role: "user",
-    content: [
-      { type: "text", text: prompt },
-      { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
-    ],
-  };
-}

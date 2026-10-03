@@ -1,7 +1,6 @@
 export const MAX_SHORT_TEXT = 100;
 export const MAX_MEDIUM_TEXT = 500;
 export const MAX_LONG_TEXT = 1000;
-export const MAX_IMAGE_BASE64_LENGTH = 2_000_000;
 export const MAX_CHAT_HISTORY = 6;
 export const MAX_SUMMARY_FORTUNES = 5;
 
