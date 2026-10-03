@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Dela_Gothic_One, Zen_Maru_Gothic } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import "./omikuji.css";
 
@@ -42,7 +43,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ja" className={`${displayFont.variable} ${sansFont.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
