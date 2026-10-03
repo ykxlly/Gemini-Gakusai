@@ -13,7 +13,6 @@ import TopForm from "@/components/shrine/TopForm";
 import { useCelebration } from "@/hooks/useCelebration";
 import { useFortune } from "@/hooks/useFortune";
 import { useMemories } from "@/hooks/useMemories";
-import { useNoveltyClaim } from "@/hooks/useNoveltyClaim";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { useToast } from "@/hooks/useToast";
 import { getMissionSpot, type Result } from "@/lib/fortune";
@@ -35,6 +34,7 @@ export default function OmikujiExperience() {
   const [isResetting, setIsResetting] = useState(false);
   const [previousSpot, setPreviousSpot] = useState<string | undefined>(undefined);
   const [missionComplete, setMissionComplete] = useState(false);
+  const [missionConfirmed, setMissionConfirmed] = useState<{ spot: string; at: Date } | null>(null);
 
   const fortune = useFortune({ previousSpot, notify: showToast, onDrawStart: handleDrawStart, onDrawn: handleDrawn });
 
@@ -42,15 +42,6 @@ export default function OmikujiExperience() {
     () => getMissionSpot(fortune.result?.mission.target_spot),
     [fortune.result],
   );
-
-  const claim = useNoveltyClaim({
-    visitorId: persist.visitorId,
-    discoveryCount: persist.discoveryCards.length,
-    claimedNovelties: persist.claimedNovelties,
-    setClaimedNovelties: persist.setClaimedNovelties,
-    setLatestClaim: persist.setLatestClaim,
-    notify: showToast,
-  });
 
   const memoriesStore = useMemories({
     result: fortune.result,
@@ -88,12 +79,15 @@ export default function OmikujiExperience() {
   }, []);
 
   // 現地ミッション: 自己申告の「行きました！」。押したら紙吹雪 → 完了画面へ。
+  // 達成した企画と時刻を完了画面に渡す（スタッフの目視確認用）。
   const handleArrived = useCallback(() => {
+    if (!fortune.result) return;
     setMissionComplete(true);
+    setMissionConfirmed({ spot: fortune.result.mission.target_spot, at: new Date() });
     fireConfetti(36);
     setPhase("reward");
     scrollTop();
-  }, [fireConfetti]);
+  }, [fortune.result, fireConfetti]);
 
   const backFromReward = useCallback(() => {
     setPhase(fortune.result ? "result" : "top");
@@ -107,6 +101,7 @@ export default function OmikujiExperience() {
       () => {
         fortune.resetFortune();
         setMissionComplete(false);
+        setMissionConfirmed(null);
         memoriesStore.resetMemories();
         setPhase("top");
         setIsResetting(false);
@@ -126,11 +121,6 @@ export default function OmikujiExperience() {
 
   const openMemories = useCallback(() => setMemoriesOpen(true), []);
   const closeMemories = useCallback(() => setMemoriesOpen(false), []);
-
-  // ?booth=novelty では交換所（S3）を先頭に表示する。
-  useEffect(() => {
-    if (persist.isBoothMode) setPhase((current) => (current === "top" ? "reward" : current));
-  }, [persist.isBoothMode]);
 
   // マウスパララックス（pointer:fine のみ）。
   useEffect(() => {
@@ -224,15 +214,8 @@ export default function OmikujiExperience() {
 
       {phase === "reward" && (
         <RewardPanel
-          discoveryCount={persist.discoveryCards.length}
-          claimedNovelties={persist.claimedNovelties}
-          latestClaim={persist.latestClaim}
-          visitorId={persist.visitorId}
-          staffKey={claim.staffKey}
-          setStaffKey={claim.setStaffKey}
-          claimError={claim.claimError}
-          isClaiming={claim.isClaiming}
-          onClaim={claim.claimNovelty}
+          achievedSpot={missionConfirmed?.spot ?? null}
+          achievedAt={missionConfirmed?.at ?? null}
           showBack
           onBackToTop={backFromReward}
         />

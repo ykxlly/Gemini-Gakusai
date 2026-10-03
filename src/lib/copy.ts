@@ -1,6 +1,9 @@
 // S0〜S3 のUI文言を一元管理する。画面コンポーネントは直書きせず本モジュールを参照すること。
 // トーン: 神社・おみくじの世界観を保ちつつ、参加者に意図が正確に伝わる表現。
 
+// ノベルティ受け取りブース。会場名が変わっても、ここ1か所だけ直せば全体が追従する。
+const RECEIVE_SPOT = "S103";
+
 export const copy = {
   common: {
     timeout: "通信がタイムアウトしました。電波状況を確認の上、もう一度お試しください。",
@@ -11,7 +14,7 @@ export const copy = {
     festival: "BDSF 2026",
     shrineName: "寄り道神社",
     boothLabel: "御神籤授与所",
-    receiveSpot: "S103",
+    receiveSpot: RECEIVE_SPOT,
   },
   top: {
     heading: "今日の寄り道を授かろう",
@@ -78,30 +81,15 @@ export const copy = {
     todoLabel: "ここから",
   },
   reward: {
-    heading: "集めた印をノベルティに交換",    lead: "寄り道御朱印帳の記録数に応じて、好きな特典を選べます。",
-    countLabel: "現在の発見カード",
-    ticketLabel: "授与所 受付番号",
-    ticketHint: "交換を申し込むとき、この番号をスタッフにお見せください。",
-    staffKeyLabel: "スタッフ承認キー",
-    staffKeyPlaceholder: "スタッフが入力してください",
-    staffKeyHint: "スタッフ端末で承認キーを入力してから、授与を確定します。",
-    stickerName: "ステッカー",
-    toteName: "トートバッグ",
-    stickerCondition: "1件以上",
-    toteCondition: "3件以上",
-    available: "交換できます",
-    stickerRemaining: "あと1件で交換できます",
-    toteRemaining: (rest: number) => `あと${rest}件で交換できます`,
-    claimedOnDevice: "この端末では交換済みです",
-    exchange: "交換する",
-    recording: "記録中",
-    conditionUnmet: "条件未達成",
-    exchanged: "交換済み",
-    stickerRecorded: "ステッカーの交換を記録しました",
-    toteRecorded: "トートバッグの交換を記録しました",
-    showToStaff: "交換ボタンを押したら、この画面をブーススタッフに見せてください。",
+    kicker: "おめでとう！",
+    stampTop: "寄り道",
+    stampMain: "達成",
+    bigLine: `${RECEIVE_SPOT}に来てね！`,
+    giftLine: "ステッカーとトートバッグをプレゼント",
+    showStaff: "この画面をスタッフに見せてください",
+    recordSpotLabel: "達成した企画",
+    recordTimeLabel: "達成時刻",
     backToTop: "寄り道おみくじへ戻る",
-    boothBusy: "授与所が混み合っています。画面を閉じずにスタッフへお声がけください。",
   },
   memories: {
     open: "思い出を開く",

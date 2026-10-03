@@ -824,65 +824,39 @@ body {
   border: 1px solid rgba(184, 59, 47, .38);
   background: rgba(255, 250, 239, .92);
   box-shadow: 5px 5px 0 rgba(184, 59, 47, .14);
-}
-.booth-reward-kicker { display: flex; align-items: center; gap: 7px; color: var(--vermilion); font-size: 11px; font-weight: 800; letter-spacing: .12em; }
-.booth-reward h1 { margin: 14px 0 8px; font-family: var(--font-display); font-size: clamp(28px, 7vw, 42px); line-height: 1.25; letter-spacing: .08em; }
-.booth-reward h1 em { color: var(--vermilion); font-style: normal; }
-.booth-reward-lead { margin: 0; color: #665f54; font-size: 12px; line-height: 1.7; }
-.booth-reward-count { margin-top: 18px; padding: 11px 14px; display: flex; align-items: baseline; justify-content: space-between; border-top: 1px solid rgba(184, 59, 47, .2); border-bottom: 1px solid rgba(184, 59, 47, .2); color: #756c5e; font-size: 11px; }
-.booth-reward-count strong { color: var(--vermilion); font-family: var(--font-display); font-size: 30px; line-height: 1; }
-.booth-reward-count small { margin-left: 3px; font-family: var(--font-sans); font-size: 11px; }
-.booth-reward-options { display: grid; gap: 10px; margin-top: 14px; }
-.booth-reward-option { position: relative; min-height: 86px; padding: 12px 12px 12px 52px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; border: 1px dashed #c9bca9; background: rgba(255, 255, 255, .5); }
-.booth-reward-seal { position: absolute; left: 12px; top: 50%; width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid #b8aa96; border-radius: 50%; color: #918571; font-family: var(--font-display); font-size: 10.5px; transform: translateY(-50%) rotate(-8deg); }
-.booth-reward-option small { color: #8b7b68; font-size: 11px; }
-.booth-reward-option h2 { margin: 2px 0; font-family: var(--font-display); font-size: 18px; }
-.booth-reward-option p { margin: 0; color: #8b8174; font-size: 11.5px; }
-.booth-reward-option button { min-height: 44px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid #c2b5a2; background: transparent; color: #8e806d; font-size: 12px; font-weight: 800; cursor: pointer; }
-.booth-reward-available { border-style: solid; border-color: rgba(184, 59, 47, .45); background: #fff4e9; }
-.booth-reward-available .booth-reward-seal { border-color: var(--vermilion); background: var(--vermilion); color: white; }
-.booth-reward-available button { border-color: var(--vermilion); background: var(--vermilion); color: white; }
-.booth-reward-option button:disabled { opacity: .55; cursor: not-allowed; }
-.booth-reward-claimed { border-color: var(--green); background: #eef5ed; }
-.booth-reward-claimed .booth-reward-seal { border-color: var(--green); background: var(--green); color: white; }
-.staff-confirmation { position: relative; margin-top: 14px; padding: 18px 16px 14px; border: 2px solid var(--green); background: #f1f8ef; box-shadow: 4px 4px 0 rgba(23, 107, 87, .16); animation: staff-confirmation-in .35s cubic-bezier(.22, 1, .36, 1) both; }
-.staff-confirmation-status { display: inline-flex; align-items: center; gap: 7px; color: var(--green); font-size: 13px; font-weight: 900; letter-spacing: .14em; }
-.staff-confirmation-main { margin-top: 10px; text-align: center; }
-.staff-confirmation-main small { display: block; color: #587465; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
-.staff-confirmation-main strong { display: block; margin-top: 3px; color: var(--green); font-family: var(--font-display); font-size: 29px; letter-spacing: .1em; }
-.staff-confirmation-main p { margin: 7px 0 0; color: #4e6558; font-size: 11.5px; line-height: 1.6; }
-.staff-confirmation-meta { margin-top: 14px; padding-top: 9px; display: flex; justify-content: space-between; border-top: 1px solid rgba(23, 107, 87, .2); color: #668070; font-size: 11px; }
-@keyframes staff-confirmation-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.staff-key-panel { margin-top: 14px; padding: 12px; border: 1px solid rgba(117, 108, 94, .25); background: rgba(255, 255, 255, .55); }
-.staff-key-panel label { display: block; color: #6f6659; font-size: 11.5px; font-weight: 800; }
-.staff-key-panel input { width: 100%; min-height: 44px; height: 44px; margin-top: 7px; padding: 0 10px; border: 1px solid #c9bca9; border-radius: 0; background: #fffdf8; color: var(--ink); font-size: 16px; }
-.staff-key-panel input:focus { border-color: var(--green); outline: 3px solid rgba(23, 107, 87, .14); outline-offset: 1px; }
-.staff-key-panel p { margin: 6px 0 0; color: #8d8375; font-size: 11px; }
-.claim-ticket {
-  position: relative;
-  margin-top: 14px;
-  padding: 14px 16px;
-  border: 1px dashed rgba(184, 59, 47, .5);
-  background: #fff4e4;
   text-align: center;
 }
-.claim-ticket::before,
-.claim-ticket::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 8px;
-  height: 16px;
-  border: 1px solid rgba(184, 59, 47, .35);
+.booth-reward-kicker { display: inline-flex; align-items: center; gap: 7px; color: var(--vermilion); font-size: 13px; font-weight: 800; letter-spacing: .12em; }
+.booth-reward h1 { margin: 12px 0 10px; font-family: var(--font-display); font-size: clamp(32px, 9vw, 46px); line-height: 1.25; letter-spacing: .06em; color: var(--vermilion); overflow-wrap: anywhere; }
+.reward-stamp {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  margin: 6px auto 18px;
+  display: grid;
+  place-content: center;
+  gap: 2px;
+  border: 4px double var(--red);
   border-radius: 50%;
-  background: var(--paper);
-  transform: translateY(-50%);
+  background: rgba(255, 253, 248, .92);
+  color: var(--vermilion);
+  transform: rotate(-8deg);
+  animation: reward-stamp-in .6s cubic-bezier(.34, 1.56, .64, 1) both;
 }
-.claim-ticket::before { left: -5px; }
-.claim-ticket::after { right: -5px; }
-.claim-ticket > span { display: block; color: #8a7762; font-size: 11px; letter-spacing: .12em; }
-.claim-ticket strong { display: block; margin-top: 3px; color: var(--vermilion); font-family: var(--font-display); font-size: 28px; letter-spacing: .2em; }
-.claim-ticket p { margin: 5px 0 0; color: #8d8375; font-size: 11px; }
+.reward-stamp span { font-family: var(--font-display); font-size: 14px; letter-spacing: .2em; }
+.reward-stamp strong { font-family: var(--font-display); font-size: 34px; letter-spacing: .1em; }
+@keyframes reward-stamp-in {
+  from { opacity: 0; transform: rotate(-24deg) scale(2); filter: blur(3px); }
+  65% { opacity: 1; transform: rotate(-5deg) scale(.92); filter: blur(0); }
+  to { opacity: 1; transform: rotate(-8deg) scale(1); }
+}
+.reward-gift { margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; color: #4a453c; font-size: 17px; font-weight: 800; line-height: 1.6; }
+.reward-gift svg { flex: 0 0 auto; color: var(--vermilion); }
+.reward-show { margin: 18px 0 0; padding: 14px 16px; border: 1px dashed rgba(184, 59, 47, .5); background: #fff4e4; color: #7a4438; font-size: 14.5px; font-weight: 800; line-height: 1.6; }
+.reward-record { margin: 14px 0 0; padding: 12px 14px; display: grid; gap: 8px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, .6); text-align: left; }
+.reward-record div { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.reward-record dt { flex: 0 0 auto; color: #6f6659; font-size: 12.5px; font-weight: 800; }
+.reward-record dd { margin: 0; min-width: 0; text-align: right; color: var(--ink); font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
 .result-paper-kicker small { color: #a08f78; font-family: var(--font-sans); font-size: 10.5px; letter-spacing: .08em; }
 .result-heading .result-sparkle {
   width: 38px;
@@ -1049,18 +1023,14 @@ body {
     line-height: 1.5;
   }
 }
-.claim-error { margin: 10px 0 0; padding: 9px 11px; border-left: 3px solid var(--red); background: #fff0ec; color: #a53228; font-size: 11.5px; line-height: 1.5; }
-.booth-reward-note { margin: 16px 0 0; color: #756c5e; font-size: 11.5px; line-height: 1.6; }
 .booth-reward-back { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 12px; margin-top: 14px; color: var(--green); font-size: 12px; font-weight: 800; text-underline-offset: 3px; }
 
 @media (max-width: 420px) {
   .booth-reward { width: calc(100% - 24px); padding: 22px 16px 17px; }
-  .booth-reward-option { padding-left: 48px; }
-  .booth-reward-option h2 { font-size: 16px; }
-  .booth-reward-option button { min-height: 44px; padding: 0 12px; font-size: 12px; }
+  .reward-record dd { font-size: 13px; }
 }
 
-/* Omikuji atmosphere: folded slips, vermilion seals, and a授与所-style exchange card. */
+/* Omikuji atmosphere: folded slips, vermilion seals, and a shrine-counter completion card. */
 .booth-reward {
   position: relative;
   isolation: isolate;
@@ -1083,48 +1053,6 @@ body {
 .booth-reward::before { top: 10px; }
 .booth-reward::after { bottom: 10px; }
 .booth-reward-kicker { padding-top: 4px; font-family: var(--font-display); }
-.booth-reward h1 { position: relative; padding-bottom: 15px; text-align: center; }
-.booth-reward h1::after {
-  content: "本日の御神籤";
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  color: #8e7862;
-  font-family: var(--font-sans);
-  font-size: 11px;
-  letter-spacing: .18em;
-  transform: translateX(-50%);
-}
-.booth-reward-count { background: rgba(244, 234, 216, .48); }
-.booth-reward-option {
-  border-radius: 1px;
-  background:
-    linear-gradient(90deg, rgba(184, 59, 47, .08), transparent 14%, transparent 86%, rgba(184, 59, 47, .08)),
-    rgba(255, 255, 255, .54);
-  box-shadow: 2px 3px 0 rgba(126, 88, 49, .08);
-}
-.booth-reward-option::after {
-  content: "授与";
-  position: absolute;
-  right: 10px;
-  top: 7px;
-  color: #a28e78;
-  font-family: var(--font-display);
-  font-size: 10.5px;
-  writing-mode: vertical-rl;
-}
-.booth-reward-available { background: #fff3e6; }
-.booth-reward-claimed { background: #eef5ed; box-shadow: 2px 3px 0 rgba(23, 107, 87, .1); }
-.staff-confirmation {
-  border-width: 1px;
-  border-top-width: 5px;
-  border-radius: 1px;
-  background:
-    linear-gradient(90deg, rgba(23, 107, 87, .06), transparent 18%, transparent 82%, rgba(23, 107, 87, .06)),
-    #f1f8ef;
-}
-.staff-confirmation-status { font-family: var(--font-display); }
-.staff-confirmation-main strong { letter-spacing: .16em; }
 .draw-button {
   border-radius: 2px;
   background:

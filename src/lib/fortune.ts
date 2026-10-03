@@ -16,8 +16,6 @@ export type Result = {
 };
 
 export type Choice = { value: string; label: string; note: string };
-export type DiscoveryCard = { spot: string; title: string; message: string };
-export type NoveltyKind = "sticker" | "tote";
 export type FestivalSpot = {
   id: string;
   name: string;
