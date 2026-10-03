@@ -56,7 +56,7 @@ export function useMemories(options: { result: Result | null; history: HistoryEn
           {
             fortuneName: result.fortune_name,
             color: result.lucky_elements.color,
-            spot: result.mission.target_spot,
+            spot: result.recommendation.spot,
           },
           { timeoutMs: 20_000, errorMessage: "お守りカードの生成に失敗しました。" },
         );
@@ -64,11 +64,11 @@ export function useMemories(options: { result: Result | null; history: HistoryEn
           phrase:
             typeof data.phrase === "string" && data.phrase
               ? data.phrase
-              : `${result.mission.target_spot}で、今日だけの発見を。`,
+              : `${result.recommendation.spot}で、今日だけの発見を。`,
           accentHex: typeof data.accent_hex === "string" ? data.accent_hex : "#d83a2e",
         });
       } catch {
-        setCard({ phrase: `${result.mission.target_spot}で、今日だけの発見を。`, accentHex: "#d83a2e" });
+        setCard({ phrase: `${result.recommendation.spot}で、今日だけの発見を。`, accentHex: "#d83a2e" });
         notify("お守りカードを作りました");
       } finally {
         busyRef.current.card = false;
@@ -115,20 +115,20 @@ export function useMemories(options: { result: Result | null; history: HistoryEn
             message: text,
             history: nextMessages.slice(0, -1).slice(-6).map((entry) => ({ role: entry.role, text: entry.text })),
             fortuneName: result.fortune_name,
-            missionTitle: result.mission.title,
+            spotTitle: result.recommendation.spot,
           },
           { timeoutMs: 30_000, errorMessage: "返信の取得に失敗しました。" },
         );
         const reply =
           typeof data.reply === "string" && data.reply
             ? data.reply
-            : `「${result.mission.target_spot}」を目指してみよう！会場案内や企画の詳細は現地表示も確認してね。`;
+            : `「${result.recommendation.spot}」を目指してみよう！会場案内や企画の詳細は現地表示も確認してね。`;
         setChatMessages((current) => [...current, { role: "model" as const, text: reply }].slice(-MAX_CHAT_TURNS));
       } catch (error) {
         setChatMessages((current) =>
           [
             ...current,
-            { role: "model" as const, text: `「${result.mission.target_spot}」を目指してみよう！会場案内や企画の詳細は現地表示も確認してね。` },
+            { role: "model" as const, text: `「${result.recommendation.spot}」を目指してみよう！会場案内や企画の詳細は現地表示も確認してね。` },
           ].slice(-MAX_CHAT_TURNS),
         );
         notify(error instanceof Error ? error.message : "案内モードで返信しました");
@@ -152,8 +152,8 @@ export function useMemories(options: { result: Result | null; history: HistoryEn
           fortuneName: result.fortune_name,
           visits: [
             {
-              spot: result.mission.target_spot,
-              note: result.action_tip,
+              spot: result.recommendation.spot,
+              note: result.message,
             },
           ],
         },
@@ -200,7 +200,7 @@ export function useMemories(options: { result: Result | null; history: HistoryEn
     context.fillText(`運勢：${result.fortune_name}`, 70, 270);
     context.fillStyle = "#171714";
     context.font = "700 34px sans-serif";
-    context.fillText(`今日の寄り道：${result.mission.target_spot}`, 70, 350);
+    context.fillText(`今日の寄り道：${result.recommendation.spot}`, 70, 350);
     let y = 440;
     if (history.length > 0) {
       context.fillStyle = "#176b57";

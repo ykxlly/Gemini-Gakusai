@@ -110,7 +110,7 @@ function MemoriesSheet({
                   <span className="omamori-seal">御守</span>
                   <strong>{result.fortune_name}</strong>
                   <p>{store.card.phrase}</p>
-                  <small>{result.mission.target_spot}</small>
+                  <small>{result.recommendation.spot}</small>
                 </div>
               </div>
             )}

@@ -2,14 +2,14 @@
 // 閲覧URL: /poster。印刷ボタンでA4縦1枚に出力できる。
 "use client";
 
-import { Bell, Gift, MapPin, QrCode, ScrollText, Sparkles } from "lucide-react";
+import { Bell, MapPin, QrCode, ScrollText, Share2, Sparkles } from "lucide-react";
 import Image from "next/image";
 
 const steps = [
   { no: "STEP 1", title: "スマホで鈴を鳴らす！", icon: Bell },
   { no: "STEP 2", title: "AIおみくじを授かる！", icon: ScrollText },
-  { no: "STEP 3", title: "指定のスポットへGO！", icon: MapPin },
-  { no: "STEP 4", title: "ノベルティGET！", icon: Gift },
+  { no: "STEP 3", title: "おすすめの場所へGO！", icon: MapPin },
+  { no: "STEP 4", title: "結果をシェア！", icon: Share2 },
 ];
 
 export default function BoothPosterPage() {
@@ -47,7 +47,7 @@ export default function BoothPosterPage() {
 
           {/* サブキャッチ */}
           <p className="mt-4 max-w-md text-sm font-bold leading-relaxed text-gray-700 sm:text-base">
-            今の気分で引く、次世代おみくじ！ミッションクリアで限定グッズもGET🎁
+            今の気分で引く、次世代おみくじ！おすすめの場所まで、AIがご案内✨
           </p>
 
           {/* ビジュアル＆QRエリア */}

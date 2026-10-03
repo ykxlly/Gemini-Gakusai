@@ -1,8 +1,5 @@
-// S0〜S3 のUI文言を一元管理する。画面コンポーネントは直書きせず本モジュールを参照すること。
+// S0〜S1 のUI文言を一元管理する。画面コンポーネントは直書きせず本モジュールを参照すること。
 // トーン: 神社・おみくじの世界観を保ちつつ、参加者に意図が正確に伝わる表現。
-
-// ノベルティ受け取りブース。会場名が変わっても、ここ1か所だけ直せば全体が追従する。
-const RECEIVE_SPOT = "S103";
 
 export const copy = {
   common: {
@@ -14,14 +11,13 @@ export const copy = {
     festival: "BDSF 2026",
     shrineName: "寄り道神社",
     boothLabel: "御神籤授与所",
-    receiveSpot: RECEIVE_SPOT,
   },
   top: {
     heading: "今日の寄り道を授かろう",
     lead: "今の気分を教えてください。AIがあなたにぴったりの『寄り道』を導き出します。",
     guidance: "迷ったら、いま一番近いものを直感で選んでください。",
     privacyNote: "※入力内容はAIによる提案のみに使用され、保存されることはありません。",
-    drawProgressLabel: "今日の寄り道印",
+    drawProgressLabel: "今日の選択",
     drawReady: "準備が整いました。今日の運勢を引いてみよう！",
     drawRemaining: (rest: number) => `あと${rest}つ選ぶと、おみくじを引けます`,
     mascotIdle: "一緒に運勢を探そう",
@@ -29,6 +25,9 @@ export const copy = {
     mascotReady: "準備OK！運勢を引こう",
     submit: "鈴緒を引いて授かる",
     submitBusy: "御神籤を整えています...",
+    nicknameLabel: "ニックネーム",
+    nicknameNote: "任意・最大10文字・保存しません。結果の呼びかけに使います。",
+    nicknamePlaceholder: "よばれたい名前",
     questions: { mood: "気分", goal: "目的", companion: "同行者" },
   },
   drawing: {
@@ -46,8 +45,14 @@ export const copy = {
     fallbackNoticeTitle: "案内係からのお知らせ",
     fallbackNoticeBody: "案内所が混み合っているため、公式企画から一枚を選びました。",
     fallbackToast: "公式企画データからおすすめを選びました",
-    nextAction: "現地のお題を見る",
-    retrySame: "同じ条件で別企画",
+    fortuneLineLabel: "今日のひと言",
+    recommendHeading: (nickname: string) => (nickname ? `${nickname}さんにおすすめの場所はここ！` : "あなたにおすすめの場所はここ！"),
+    recommendHeadingPlain: "あなたにおすすめの場所はここ！",
+    placeLabel: "場所",
+    reasonLabel: "おすすめの理由",
+    alternativesHeading: "ほかにもおすすめ",
+    luckyHeading: "今日のラッキー",
+    redrawCta: "もう一回引く",
     changeAnswer: "回答を変える",
     share: "結果をシェア",
     sharing: "シェアを準備しています...",
@@ -55,41 +60,6 @@ export const copy = {
     shareCopied: "結果をクリップボードにコピーしました",
     shareCopyFailed: "共有テキストのコピーに失敗しました",
     error: "おみくじを引けませんでした。電波状況を確認の上、もう一度鈴を鳴らしてみてください。",
-  },
-  mission: {
-    headingPrefix: "現地ミッション",
-    arrivedCta: "行きました！",
-    arrivedHeading: "企画に着いたら、押すだけ",
-    arrivedLead: "がんばりの条件はありません。企画に着いたら、このボタンを押してください。",
-    arrivedNote: "押すと完了画面に進みます。この画面はあとでスタッフに見せるので、閉じないでくださいね。",
-    placeLabel: "集合・開催場所",
-    taskLabel: "やること",
-  },
-  progress: {
-    kicker: "今日の三歩",
-    title: "あと一歩ずつ、進めよう",
-    step1Name: "運勢",
-    step1Note: "おみくじを引いたら達成",
-    step2Name: "寄り道",
-    step2Note: "「行きました！」で達成",
-    step3Name: (spot: string) => `${spot}で受け取り`,
-    step3Note: "二まで達成したら、受け取りへ",
-    nextLabel: "次にやること",
-    goMissionCta: "ミッションを確認する",
-    goRewardCta: "受け取り画面へ進む",
-    doneLabel: "達成",
-    todoLabel: "ここから",
-  },
-  reward: {
-    kicker: "おめでとう！",
-    stampTop: "寄り道",
-    stampMain: "達成",
-    bigLine: `${RECEIVE_SPOT}に来てね！`,
-    giftLine: "ステッカーとトートバッグをプレゼント",
-    showStaff: "この画面をスタッフに見せてください",
-    recordSpotLabel: "達成した企画",
-    recordTimeLabel: "達成時刻",
-    backToTop: "寄り道おみくじへ戻る",
   },
   memories: {
     open: "思い出を開く",

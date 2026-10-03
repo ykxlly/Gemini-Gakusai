@@ -1,4 +1,4 @@
-// S0→S1: 入力3問 + おみくじ授与（POST /api/omikuji）。
+// S0→S1: 入力3問 + 任意ニックネーム + おみくじ授与（POST /api/omikuji）。
 // 成功時は result を保持し、失敗時は公式データのフォールバックで継続する。
 // 親は onDrawStart（授与開始時の他フック掃除）と onDrawn（履歴・遷移・演出）を受け持つ。
 "use client";
@@ -19,6 +19,7 @@ export function useFortune(options: {
   const [mood, setMood] = useState("");
   const [goal, setGoal] = useState("");
   const [companion, setCompanion] = useState("");
+  const [nickname, setNickname] = useState("");
   const [mbti, setMbti] = useState("");
   const [partnerMood, setPartnerMood] = useState("");
   const [result, setResult] = useState<Result | null>(null);
@@ -123,6 +124,7 @@ export function useFortune(options: {
       mood,
       goal,
       companion,
+      nickname,
       mbti,
       partnerMood,
       previousSpot: callbacks.current.previousSpot,
@@ -141,12 +143,13 @@ export function useFortune(options: {
           mood: snapshot.mood,
           goal: snapshot.goal,
           companion: snapshot.companion,
+          nickname: snapshot.nickname || undefined,
           mbti: snapshot.mbti || undefined,
           partnerMood: snapshot.partnerMood || undefined,
         }, { timeoutMs: 30_000, errorMessage: copy.result.error }),
         new Promise((resolve) => window.setTimeout(resolve, 1400)),
       ]);
-      setRouletteSpot(data.mission.target_spot);
+      setRouletteSpot(data.recommendation.spot);
       if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         await new Promise((resolve) => window.setTimeout(resolve, 620));
       }
@@ -154,8 +157,14 @@ export function useFortune(options: {
       drawn(data, false);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (requestError) {
-      const fallback = createFallbackResult(snapshot.goal, snapshot.companion, snapshot.previousSpot);
-      setRouletteSpot(fallback.mission.target_spot);
+      const fallback = createFallbackResult(
+        snapshot.mood,
+        snapshot.goal,
+        snapshot.companion,
+        snapshot.nickname,
+        snapshot.previousSpot,
+      );
+      setRouletteSpot(fallback.recommendation.spot);
       setIsFallbackResult(true);
       withViewTransition(() => setResult(fallback));
       tell(copy.result.fallbackToast);
@@ -166,7 +175,7 @@ export function useFortune(options: {
       inFlight.current = false;
       setIsLoading(false);
     }
-  }, [later, mood, goal, companion, mbti, partnerMood]);
+  }, [later, mood, goal, companion, nickname, mbti, partnerMood]);
 
   const draw = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -187,6 +196,7 @@ export function useFortune(options: {
     () => ({
       formStep, setFormStep,
       mood, setMood, goal, setGoal, companion, setCompanion,
+      nickname, setNickname,
       mbti, setMbti, partnerMood, setPartnerMood,
       result, setResult, isLoading, error, isFallbackResult,
       isPunching, isSuzuPulling, rouletteSpot, loadingMessageIndex,
@@ -195,7 +205,7 @@ export function useFortune(options: {
       requestFortune, draw, resetFortune,
     }),
     [
-      formStep, mood, goal, companion, mbti, partnerMood,
+      formStep, mood, goal, companion, nickname, mbti, partnerMood,
       result, isLoading, error, isFallbackResult,
       isPunching, isSuzuPulling, rouletteSpot, loadingMessageIndex,
       selectionReaction, selectionCount, mascotMessage, canSubmit,

@@ -1,14 +1,14 @@
 
-// S1 結果: 行き先hero + 運勢本文 + ラッキー要素 + 副導線。
+// S1 結果: 運勢（筆文字・大きく）＋「おすすめの場所はここ！」が主役。
+// 代案2件・ラッキー要素・相性コメント・「もう一回引く」「シェア」で完結する。
 "use client";
 
 import { ArrowLeft, MapPin, RefreshCw, Share2, Star } from "lucide-react";
 import Image from "next/image";
 import type { CSSProperties } from "react";
 import { memo, useState } from "react";
-import RallyProgress from "@/components/shrine/RallyProgress";
 import { copy } from "@/lib/copy";
-import { getLocationPoint, type FestivalSpot, type Result } from "@/lib/fortune";
+import { getSpotByName, type Result } from "@/lib/fortune";
 
 function getFortuneNameSize(name: string) {
   const length = Array.from(name.replace(/\s/g, "")).length;
@@ -20,27 +20,19 @@ function getFortuneNameSize(name: string) {
 function ResultHero({
   result,
   isFallbackResult,
-  missionSpot,
-  missionComplete,
-  isLoading,
-  onGoMission,
-  onGoReward,
-  onRetrySame,
+  nickname,
+  onRedraw,
   onChangeAnswer,
   onShare,
 }: {
   result: Result;
   isFallbackResult: boolean;
-  missionSpot: FestivalSpot | undefined;
-  missionComplete: boolean;
-  isLoading: boolean;
-  onGoMission: () => void;
-  onGoReward: () => void;
-  onRetrySame: () => void;
+  nickname: string;
+  onRedraw: () => void;
   onChangeAnswer: () => void;
   onShare: () => void;
 }) {
-  const destinationPoint = getLocationPoint(missionSpot?.location);
+  const recommendationSpot = getSpotByName(result.recommendation.spot);
   const [isSharing, setIsSharing] = useState(false);
 
   async function handleShareClick() {
@@ -56,114 +48,11 @@ function ResultHero({
   return (
     <>
       <button className="back-button" onClick={onChangeAnswer} type="button">
-        <ArrowLeft size={18} /> 選び直す
+        <ArrowLeft size={18} /> {copy.result.changeAnswer}
       </button>
-      <article className="destination-hero omikuji-reveal-card">
-        <div className="destination-kicker">
-          <MapPin size={15} /> {copy.result.destinationKicker}{" "}
-          {isFallbackResult && <span>{copy.result.fallbackBadge}</span>}
-        </div>
-        {isFallbackResult && (
-          <div className="fallback-notice" role="status">
-            <span>{copy.result.fallbackNoticeTitle}</span>
-            <p>{copy.result.fallbackNoticeBody}</p>
-          </div>
-        )}
-        <h1>{result.mission.target_spot}</h1>
-        <div className="destination-location">
-          <strong>{missionSpot?.location || "公式案内で場所を確認"}</strong>
-          {missionSpot && <span>{missionSpot.category}</span>}
-        </div>
-        {missionSpot &&
-          (missionSpot.schedule || missionSpot.price || missionSpot.capacity || missionSpot.notice) && (
-            <dl className="project-conditions">
-              {missionSpot.schedule && (
-                <div>
-                  <dt>時間</dt>
-                  <dd>{missionSpot.schedule}</dd>
-                </div>
-              )}
-              {missionSpot.price && (
-                <div>
-                  <dt>料金</dt>
-                  <dd>{missionSpot.price}</dd>
-                </div>
-              )}
-              {missionSpot.capacity && (
-                <div>
-                  <dt>定員</dt>
-                  <dd>{missionSpot.capacity}</dd>
-                </div>
-              )}
-              {missionSpot.notice && (
-                <div>
-                  <dt>案内</dt>
-                  <dd>{missionSpot.notice}</dd>
-                </div>
-              )}
-            </dl>
-          )}
-        <div className="destination-mission">
-          <small>次にすること</small>
-          <strong>目的地へ向かい、入口の案内を確認</strong>
-          <p>{result.mission.description}</p>
-        </div>
-        <div
-          className="route-map"
-          id="festival-route"
-          aria-label={`おみくじブース S103から${missionSpot?.location || "目的地"}までのエリア案内`}
-        >
-          <div className="route-map-heading">
-            <span>会場案内</span>
-            <strong>道しるべをたどろう</strong>
-          </div>
-          <div className="lantern-route">
-            <div className="lantern-route-line" aria-hidden="true" />
-            <div className="lantern-stop">
-              <span className="lantern-mark">一</span>
-              <div>
-                <small>出発</small>
-                <strong>おみくじ受付</strong>
-                <span>S103</span>
-              </div>
-            </div>
-            <div className="lantern-stop">
-              <span className="lantern-mark">二</span>
-              <div>
-                <small>目印にするエリア</small>
-                <strong>{destinationPoint.zone}</strong>
-                <span>案内表示を目印に進む</span>
-              </div>
-            </div>
-            <div className="lantern-stop lantern-stop-goal">
-              <span className="lantern-mark">三</span>
-              <div>
-                <small>目的地</small>
-                <strong>{missionSpot?.location || "目的地"}</strong>
-                <span>入口の案内を確認</span>
-              </div>
-            </div>
-          </div>
-          <small className="map-disclaimer">会場内の通路は、現地の案内表示にしたがってお進みください。</small>
-        </div>
-        <a className="destination-primary-button" href="#festival-route">
-          <MapPin size={18} /> 道しるべを見る
-        </a>
-        <a
-          className="official-project-button"
-          href="https://ku-bdsfes.pages.dev/projects"
-          rel="noreferrer"
-          target="_blank"
-        >
-          企画の詳細を見る
-        </a>
-      </article>
-      <RallyProgress
-        missionComplete={missionComplete}
-        onGoMission={onGoMission}
-        onGoReward={onGoReward}
-      />
-      <div className="result-heading">
+
+      {/* 1. 運勢（大きく・筆文字）＋一言 */}
+      <article className="result-heading omikuji-reveal-card">
         <div className="result-paper-kicker">
           <span>奉納</span> 今日の御神籤授与札 <small>{copy.site.shrineName}</small>
         </div>
@@ -171,7 +60,7 @@ function ResultHero({
         <div className="eyebrow">
           <Star size={14} fill="currentColor" /> 今日の御神籤
         </div>
-        <p>本日の御神籤です</p>
+        <p>{copy.result.fortuneLineLabel}</p>
         <h1 aria-label={result.fortune_name} className={`fortune-vertical ${getFortuneNameSize(result.fortune_name)}`}>
           {Array.from(result.fortune_name).map((char, index) => (
             <span aria-hidden="true" className="fortune-char" key={index} style={{ "--i": index } as CSSProperties}>
@@ -182,42 +71,115 @@ function ResultHero({
         <div className="result-seal">
           <Star size={18} fill="currentColor" /> 授与済
         </div>
-      </div>
+      </article>
+      <p className="fortune-line">{result.fortune_line}</p>
       <blockquote className="washi-slip">{result.message}</blockquote>
+
+      {/* 2. おすすめの場所（ここが主役） */}
+      <article className="destination-hero omikuji-reveal-card">
+        <div className="destination-kicker">
+          <MapPin size={15} />
+          {isFallbackResult ? copy.result.recommendHeadingPlain : copy.result.recommendHeading(nickname)}
+          {isFallbackResult && <span>{copy.result.fallbackBadge}</span>}
+        </div>
+        {isFallbackResult && (
+          <div className="fallback-notice" role="status">
+            <span>{copy.result.fallbackNoticeTitle}</span>
+            <p>{copy.result.fallbackNoticeBody}</p>
+          </div>
+        )}
+        <h1>{result.recommendation.spot}</h1>
+        <div className="destination-location">
+          <strong>
+            <MapPin size={17} aria-hidden="true" /> {recommendationSpot?.location || copy.result.placeLabel}
+          </strong>
+          {recommendationSpot && <span>{recommendationSpot.category}</span>}
+        </div>
+        <div className="recommend-reason">
+          <small>{copy.result.reasonLabel}</small>
+          <p>{result.recommendation.reason}</p>
+        </div>
+        {recommendationSpot &&
+          (recommendationSpot.schedule || recommendationSpot.price || recommendationSpot.capacity || recommendationSpot.notice) && (
+            <dl className="project-conditions">
+              {recommendationSpot.schedule && (
+                <div>
+                  <dt>時間</dt>
+                  <dd>{recommendationSpot.schedule}</dd>
+                </div>
+              )}
+              {recommendationSpot.price && (
+                <div>
+                  <dt>料金</dt>
+                  <dd>{recommendationSpot.price}</dd>
+                </div>
+              )}
+              {recommendationSpot.capacity && (
+                <div>
+                  <dt>定員</dt>
+                  <dd>{recommendationSpot.capacity}</dd>
+                </div>
+              )}
+              {recommendationSpot.notice && (
+                <div>
+                  <dt>案内</dt>
+                  <dd>{recommendationSpot.notice}</dd>
+                </div>
+              )}
+            </dl>
+          )}
+        <a
+          className="official-project-button"
+          href="https://ku-bdsfes.pages.dev/projects"
+          rel="noreferrer"
+          target="_blank"
+        >
+          企画の詳細を見る
+        </a>
+      </article>
+
+      {/* 3. ほかにもおすすめ（2件・小さめ） */}
+      <section className="alternatives" aria-label={copy.result.alternativesHeading}>
+        <h2>{copy.result.alternativesHeading}</h2>
+        <div className="alternatives-list">
+          {result.alternatives.map((alternative) => {
+            const spot = getSpotByName(alternative.spot);
+            return (
+              <article className="alternative-item" key={alternative.spot}>
+                <strong>{alternative.spot}</strong>
+                <span>
+                  <MapPin size={13} aria-hidden="true" /> {spot?.location || "会場内"}
+                </span>
+                <p>{alternative.reason}</p>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 4. ラッキー要素 */}
       <aside className="lucky-summary">
-        <span>今日のラッキー</span>
+        <span>{copy.result.luckyHeading}</span>
         <strong>{result.lucky_elements.color}</strong>
         <strong>{result.lucky_elements.food}</strong>
-        <strong>{result.lucky_elements.spot}</strong>
       </aside>
+
+      {/* 同行者の気分があれば相性コメント */}
       {result.compatibility_note && (
         <div aria-live="polite" className="ai-panel">
           <h3>同行の相性</h3>
           <p>{result.compatibility_note}</p>
         </div>
       )}
-      <div className="action-tip">
-        <Star size={20} fill="currentColor" />
-        <div>
-          <small>運をひらく一言</small>
-          <p>{result.action_tip}</p>
-        </div>
-      </div>
+
+      {/* 5. アクション */}
       <div className="result-actions">
+        <button className="same-conditions-button" onClick={onRedraw} type="button">
+          <RefreshCw size={18} /> {copy.result.redrawCta}
+        </button>
         <button className="share-fortune-button" disabled={isSharing} onClick={handleShareClick} type="button">
           {isSharing ? <RefreshCw className="spin" size={18} /> : <Share2 size={18} />}{" "}
           {isSharing ? copy.result.sharing : copy.result.share}
-        </button>
-        <button
-          className="same-conditions-button"
-          disabled={isLoading}
-          onClick={onRetrySame}
-          type="button"
-        >
-          <RefreshCw size={18} /> {copy.result.retrySame}
-        </button>
-        <button className="redraw-button" onClick={onChangeAnswer} type="button">
-          <ArrowLeft size={18} /> {copy.result.changeAnswer}
         </button>
       </div>
     </>

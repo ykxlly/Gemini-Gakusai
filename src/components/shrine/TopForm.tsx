@@ -54,10 +54,12 @@ export type TopFormProps = {
   mood: string;
   goal: string;
   companion: string;
+  nickname: string;
   mbti: string;
   partnerMood: string;
   setMbti: (value: string) => void;
   setPartnerMood: (value: string) => void;
+  setNickname: (value: string) => void;
   selectionCount: number;
   mascotMessage: string;
   selectionReaction: { message: string; motion: string; key: number } | null;
@@ -82,8 +84,8 @@ export type TopFormProps = {
 
 function TopForm(props: TopFormProps) {
   const {
-    formStep, setFormStep, mood, goal, companion, mbti, partnerMood,
-    setMbti, setPartnerMood, selectionCount, mascotMessage, selectionReaction,
+    formStep, setFormStep, mood, goal, companion, nickname, mbti, partnerMood,
+    setMbti, setPartnerMood, setNickname, selectionCount, mascotMessage, selectionReaction,
     isSuzuPulling, isPunching, isLoading, canSubmit, error,
     chooseAndAdvance, reactToSelection, setMood, setGoal, setCompanion, draw,
   } = props;
@@ -222,6 +224,19 @@ function TopForm(props: TopFormProps) {
                     ))}
                   </div>
                 </fieldset>
+                <div className="form-section">
+                  <label className="select-label" htmlFor="nickname">
+                    {copy.top.nicknameLabel} <span>{copy.top.nicknameNote}</span>
+                  </label>
+                  <input
+                    id="nickname"
+                    maxLength={10}
+                    onChange={(event) => setNickname(event.target.value)}
+                    placeholder={copy.top.nicknamePlaceholder}
+                    type="text"
+                    value={nickname}
+                  />
+                </div>
                 <details className="advanced-options">
                   <summary>
                     おすすめを詳しく調整する <span>任意</span>

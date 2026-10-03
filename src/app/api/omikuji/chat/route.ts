@@ -10,7 +10,7 @@ type ChatRequest = {
   message?: unknown;
   history?: unknown;
   fortuneName?: unknown;
-  missionTitle?: unknown;
+  spotTitle?: unknown;
 };
 
 function isValidHistory(value: unknown): value is ChatTurn[] {
@@ -49,9 +49,9 @@ export async function POST(request: Request) {
   const history = ((body.history as ChatTurn[] | undefined) ?? []).slice(-6);
 
   const fortuneName = isText(body.fortuneName, MAX_SHORT_TEXT) ? body.fortuneName.trim() : "不明";
-  const missionTitle = isText(body.missionTitle, MAX_SHORT_TEXT) ? body.missionTitle.trim() : "不明";
+  const spotTitle = isText(body.spotTitle, MAX_SHORT_TEXT) ? body.spotTitle.trim() : "不明";
 
-  const systemInstruction = `あなたは学園祭「超パーソナルAIおみくじ」の案内キャラクターです。来場者が引いた運勢「${fortuneName}」とミッション「${missionTitle}」を踏まえて、明るく親しみやすい口調で短く(80文字以内)答えてください。医療・断定的な心理診断・不適切な内容は禁止です。`;
+  const systemInstruction = `あなたは学園祭「超パーソナルAIおみくじ」の案内キャラクターです。来場者が引いた運勢「${fortuneName}」とおすすめの場所「${spotTitle}」を踏まえて、明るく親しみやすい口調で短く(80文字以内)答えてください。医療・断定的な心理診断・不適切な内容は禁止です。`;
 
   try {
     const response = await generateWithAIFallback({

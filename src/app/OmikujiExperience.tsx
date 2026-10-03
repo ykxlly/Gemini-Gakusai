@@ -1,13 +1,11 @@
-// Step2-3: Phase管理のみの薄い親。S0→S1→S2→S3の直線フロー + 裏動線(MemoriesSheet)。
+// Step2-3: Phase管理のみの薄い親。S0→S1の直線フロー + 裏動線(MemoriesSheet)。
 // 子へのpropsはuseCallback/useMemoで安定化し、memo化コンポーネントの再描画を抑える。
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DrawingOverlay from "@/components/shrine/DrawingOverlay";
 import MemoriesSheet from "@/components/shrine/MemoriesSheet";
-import MissionPanel from "@/components/shrine/MissionPanel";
 import ResultHero from "@/components/shrine/ResultHero";
-import RewardPanel from "@/components/shrine/RewardPanel";
 import { ConfettiLayer, SiteFooter, SiteHeader, Toast } from "@/components/shrine/SiteChrome";
 import TopForm from "@/components/shrine/TopForm";
 import { useCelebration } from "@/hooks/useCelebration";
@@ -15,14 +13,21 @@ import { useFortune } from "@/hooks/useFortune";
 import { useMemories } from "@/hooks/useMemories";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { useToast } from "@/hooks/useToast";
-import { getMissionSpot, type Result } from "@/lib/fortune";
+import type { Result } from "@/lib/fortune";
 import { shareFortune } from "@/lib/share";
 
-type Phase = "top" | "result" | "mission" | "reward";
+type Phase = "top" | "result";
 
 function scrollTop(smooth = true) {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   window.scrollTo({ top: 0, behavior: smooth && !reduceMotion ? "smooth" : "auto" });
+}
+
+// 超大吉は特別演出で紙吹雪たっぷり。
+function confettiCountFor(tier: string) {
+  if (tier === "超大吉") return 90;
+  if (tier === "大吉") return 36;
+  return 16;
 }
 
 export default function OmikujiExperience() {
@@ -33,15 +38,8 @@ export default function OmikujiExperience() {
   const [memoriesOpen, setMemoriesOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [previousSpot, setPreviousSpot] = useState<string | undefined>(undefined);
-  const [missionComplete, setMissionComplete] = useState(false);
-  const [missionConfirmed, setMissionConfirmed] = useState<{ spot: string; at: Date } | null>(null);
 
   const fortune = useFortune({ previousSpot, notify: showToast, onDrawStart: handleDrawStart, onDrawn: handleDrawn });
-
-  const missionSpot = useMemo(
-    () => getMissionSpot(fortune.result?.mission.target_spot),
-    [fortune.result],
-  );
 
   const memoriesStore = useMemories({
     result: fortune.result,
@@ -56,43 +54,11 @@ export default function OmikujiExperience() {
   function handleDrawn(result: Result, isFallback: boolean) {
     void isFallback;
     persist.appendHistory({ fortune_name: result.fortune_name, message: result.message });
-    setPreviousSpot(result.mission.target_spot);
-    setMissionComplete(false);
+    setPreviousSpot(result.recommendation.spot);
     memoriesStore.resetMemories();
     setPhase("result");
-    fireConfetti(result.fortune_name.includes("大吉") ? 36 : 16);
+    fireConfetti(confettiCountFor(result.fortune_tier));
   }
-
-  const goReward = useCallback(() => {
-    setPhase("reward");
-    scrollTop();
-  }, []);
-
-  const goResult = useCallback(() => {
-    setPhase("result");
-    scrollTop();
-  }, []);
-
-  const goMission = useCallback(() => {
-    setPhase("mission");
-    scrollTop();
-  }, []);
-
-  // 現地ミッション: 自己申告の「行きました！」。押したら紙吹雪 → 完了画面へ。
-  // 達成した企画と時刻を完了画面に渡す（スタッフの目視確認用）。
-  const handleArrived = useCallback(() => {
-    if (!fortune.result) return;
-    setMissionComplete(true);
-    setMissionConfirmed({ spot: fortune.result.mission.target_spot, at: new Date() });
-    fireConfetti(36);
-    setPhase("reward");
-    scrollTop();
-  }, [fortune.result, fireConfetti]);
-
-  const backFromReward = useCallback(() => {
-    setPhase(fortune.result ? "result" : "top");
-    scrollTop();
-  }, [fortune.result]);
 
   const resetToTop = useCallback(() => {
     setIsResetting(true);
@@ -100,8 +66,6 @@ export default function OmikujiExperience() {
     window.setTimeout(
       () => {
         fortune.resetFortune();
-        setMissionComplete(false);
-        setMissionConfirmed(null);
         memoriesStore.resetMemories();
         setPhase("top");
         setIsResetting(false);
@@ -111,7 +75,7 @@ export default function OmikujiExperience() {
     );
   }, [fortune, memoriesStore]);
 
-  const retrySame = useCallback(() => {
+  const redraw = useCallback(() => {
     fortune.requestFortune();
   }, [fortune]);
 
@@ -161,10 +125,12 @@ export default function OmikujiExperience() {
           mood={fortune.mood}
           goal={fortune.goal}
           companion={fortune.companion}
+          nickname={fortune.nickname}
           mbti={fortune.mbti}
           partnerMood={fortune.partnerMood}
           setMbti={fortune.setMbti}
           setPartnerMood={fortune.setPartnerMood}
+          setNickname={fortune.setNickname}
           selectionCount={fortune.selectionCount}
           mascotMessage={fortune.mascotMessage}
           selectionReaction={fortune.selectionReaction}
@@ -182,43 +148,20 @@ export default function OmikujiExperience() {
         />
       )}
 
-      {fortune.result && (phase === "result" || phase === "mission") && (
+      {fortune.result && phase === "result" && (
         <section
           className={`result-view ${isResetting ? "result-leaving" : ""}`}
           aria-live="polite"
         >
-          {phase === "result" && (
-            <ResultHero
-              result={fortune.result}
-              isFallbackResult={fortune.isFallbackResult}
-              missionSpot={missionSpot}
-              missionComplete={missionComplete}
-              isLoading={fortune.isLoading}
-              onGoMission={goMission}
-              onGoReward={goReward}
-              onRetrySame={retrySame}
-              onChangeAnswer={resetToTop}
-              onShare={handleShare}
-            />
-          )}
-          {phase === "mission" && (
-            <MissionPanel
-              result={fortune.result}
-              missionSpot={missionSpot}
-              onArrived={handleArrived}
-              onBackToResult={goResult}
-            />
-          )}
+          <ResultHero
+            result={fortune.result}
+            isFallbackResult={fortune.isFallbackResult}
+            nickname={fortune.nickname}
+            onRedraw={redraw}
+            onChangeAnswer={resetToTop}
+            onShare={handleShare}
+          />
         </section>
-      )}
-
-      {phase === "reward" && (
-        <RewardPanel
-          achievedSpot={missionConfirmed?.spot ?? null}
-          achievedAt={missionConfirmed?.at ?? null}
-          showBack
-          onBackToTop={backFromReward}
-        />
       )}
 
       <MemoriesSheet

@@ -26,7 +26,7 @@ export async function shareFortune(
   result: Result,
   notify: (message: string) => void,
 ): Promise<void> {
-  const shareText = `【BDSF 寄り道おみくじ】今日の運勢は「${result.fortune_name}」！最初に向かう企画は「${result.mission.target_spot}」。\n#BDSF2026 #寄り道おみくじ`;
+  const shareText = `【BDSF 寄り道おみくじ】今日の運勢は「${result.fortune_name}」！おすすめの場所は「${result.recommendation.spot}」。\n#BDSF2026 #寄り道おみくじ`;
   const fullText = `${shareText}\n${window.location.href}`;
 
   if (typeof navigator.share === "function") {
