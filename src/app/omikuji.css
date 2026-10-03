@@ -1143,3 +1143,6 @@ footer { font-size: 13px; }
 .lucky-summary { display: block; }
 .lucky-summary span { display: block; margin-bottom: 6px; }
 .lucky-summary strong { display: block; margin-top: 3px; }
+
+/* 単語あとの空白（改行は単語の境界でのみ起こる） */
+.fortune-word-gap { margin-right: .22em; }

@@ -13,38 +13,58 @@ import { getSpotByName, type Result } from "@/lib/fortune";
 // 運勢名を「サービス名」と「吉の部分」に分ける。横書きで1行に収まらない長い名前は2行にする。
 const FORTUNE_TIER_SUFFIXES = ["超大吉", "大吉", "中吉", "小吉", "末吉"] as const;
 
+// 英単語はひとかたまり（inline-block）にして、単語途中の改行を防ぐ。
+// CJKは1文字ずつ。空白は文字にせず、マージンとして表現する。
+function FortuneChars({ text, offset }: { text: string; offset: number }) {
+  const parts = text.split(/(\s+)/).filter(Boolean);
+  const nodes: React.ReactNode[] = [];
+  let index = offset;
+  for (let partIndex = 0; partIndex < parts.length; partIndex += 1) {
+    const part = parts[partIndex];
+    if (/^\s+$/.test(part)) continue;
+    const hasTrailingSpace = partIndex + 1 < parts.length && /^\s+$/.test(parts[partIndex + 1]);
+    const gapClass = hasTrailingSpace ? " fortune-word-gap" : "";
+    if (/^[A-Za-z0-9'’!.]+$/.test(part)) {
+      nodes.push(
+        <span aria-hidden="true" className={`fortune-char fortune-word${gapClass}`} key={index} style={{ "--i": index } as CSSProperties}>
+          {part}
+        </span>,
+      );
+      index += 1;
+    } else {
+      for (const char of Array.from(part)) {
+        nodes.push(
+          <span aria-hidden="true" className={`fortune-char${gapClass}`} key={index} style={{ "--i": index } as CSSProperties}>
+            {char}
+          </span>,
+        );
+        index += 1;
+      }
+    }
+  }
+  return <>{nodes}</>;
+}
+
 function splitFortuneName(name: string): { service: string; tier: string; isLong: boolean } {
   const tier = FORTUNE_TIER_SUFFIXES.find((suffix) => name.endsWith(suffix)) ?? "";
   const service = tier ? name.slice(0, name.length - tier.length).trimEnd() : name;
   const estimatedWidth = (text: string) =>
-    Array.from(text).reduce((width, char) => width + (char.charCodeAt(0) > 0x2e80 ? 1 : 0.62), 0) * 44;
+    Array.from(text).reduce((width, char) => width + (char.charCodeAt(0) > 0x2e80 ? 1 : 0.6), 0) * 44;
   const isLong = estimatedWidth(service) + estimatedWidth(tier) > 280;
   return { service, tier, isLong };
 }
 
 function FortuneName({ name }: { name: string }) {
   const { service, tier, isLong } = splitFortuneName(name);
+  const serviceText = service || name;
   return (
     <h1 aria-label={name} className={`fortune-name ${isLong ? "fortune-name-long" : ""}`}>
       <span className="fortune-service">
-        {Array.from(service || name).map((char, index) => (
-          <span aria-hidden="true" className="fortune-char" key={index} style={{ "--i": index } as CSSProperties}>
-            {char === " " ? "\u00A0" : char}
-          </span>
-        ))}
+        <FortuneChars text={serviceText} offset={0} />
       </span>
       {tier && (
         <span className="fortune-tier">
-          {Array.from(tier).map((char, index) => (
-            <span
-              aria-hidden="true"
-              className="fortune-char"
-              key={index}
-              style={{ "--i": index + Array.from(service || name).length } as CSSProperties}
-            >
-              {char}
-            </span>
-          ))}
+          <FortuneChars text={tier} offset={Array.from(serviceText).length} />
         </span>
       )}
     </h1>
