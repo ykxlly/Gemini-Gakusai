@@ -1,13 +1,13 @@
 
 // 裏動線「思い出」: FABで開くシート。主フロー（S0〜S3）からは呼ばない。
-// 音声・お守りカード・チャット・まとめ・しおり・発見カード一覧を収容する。
+// 音声・お守りカード・チャット・まとめ・しおりを収容する。
 "use client";
 
-import { BookMarked, BookOpen, Images, MessageCircle, RefreshCw, Send, Share2, Volume2, Wand2, X } from "lucide-react";
+import { BookMarked, BookOpen, MessageCircle, RefreshCw, Send, Share2, Volume2, Wand2, X } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { copy } from "@/lib/copy";
-import { isValidHex, type DiscoveryCard, type MemoryEntry, type Result } from "@/lib/fortune";
+import { isValidHex, type Result } from "@/lib/fortune";
 import type { HistoryEntry } from "@/hooks/usePersistentState";
 import type { useMemories } from "@/hooks/useMemories";
 
@@ -15,8 +15,6 @@ function MemoriesSheet({
   open,
   fabHidden,
   result,
-  memories,
-  discoveryCards,
   history,
   store,
   notify,
@@ -26,8 +24,6 @@ function MemoriesSheet({
   open: boolean;
   fabHidden: boolean;
   result: Result | null;
-  memories: MemoryEntry[];
-  discoveryCards: DiscoveryCard[];
   history: HistoryEntry[];
   store: ReturnType<typeof useMemories>;
   notify: (message: string) => void;
@@ -181,69 +177,35 @@ function MemoriesSheet({
             </div>
             <div className="memory-bookmark-panel" aria-live="polite">
               <h3>
-                <Images size={15} /> 今日の思い出しおり
+                <BookMarked size={15} /> 今日の寄り道しおり
               </h3>
-              {memories.length === 0 ? (
-                <p>{copy.memories.empty}</p>
-              ) : (
-                <>
-                  <div className="memory-strip">
-                    {memories.map((memory) => (
-                      <figure key={memory.image}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img alt={`${memory.spot}での発見`} src={memory.image} />
-                        <figcaption>{memory.caption}</figcaption>
-                      </figure>
-                    ))}
-                  </div>
-                  {!store.bookmark ? (
-                    <button
-                      className="ai-button"
-                      disabled={store.isCreatingBookmark}
-                      onClick={() => store.createBookmark(notify)}
-                      type="button"
-                    >
-                      {store.isCreatingBookmark ? (
-                        <RefreshCw className="spin" size={14} />
-                      ) : (
-                        <Images size={14} />
-                      )}{" "}
-                      しおりを作る（最大3枚）
-                    </button>
+              {!store.bookmark ? (
+                <button
+                  className="ai-button"
+                  disabled={store.isCreatingBookmark || !result}
+                  onClick={() => store.createBookmark(notify)}
+                  type="button"
+                >
+                  {store.isCreatingBookmark ? (
+                    <RefreshCw className="spin" size={14} />
                   ) : (
-                    <div className="bookmark-preview">
-                      <small>
-                        {copy.site.festival} · {copy.site.title}
-                      </small>
-                      <strong>{store.bookmark.title}</strong>
-                      <p>{store.bookmark.closingComment}</p>
-                      <button className="ai-button" onClick={() => store.exportBookmark()} type="button">
-                        <Share2 size={14} /> 画像を保存・共有
-                      </button>
-                    </div>
-                  )}
-                </>
+                    <BookMarked size={14} />
+                  )}{" "}
+                  しおりを作る
+                </button>
+              ) : (
+                <div className="bookmark-preview">
+                  <small>
+                    {copy.site.festival} · {copy.site.title}
+                  </small>
+                  <strong>{store.bookmark.title}</strong>
+                  <p>{store.bookmark.closingComment}</p>
+                  <button className="ai-button" onClick={() => store.exportBookmark()} type="button">
+                    <Share2 size={14} /> 画像を保存・共有
+                  </button>
+                </div>
               )}
             </div>
-            {discoveryCards.length > 0 && (
-              <div className="discovery-collection">
-                <h3>
-                  <BookMarked size={15} /> BDSF発見カード {discoveryCards.length}
-                </h3>
-                <div>
-                  {discoveryCards
-                    .slice(-6)
-                    .reverse()
-                    .map((card) => (
-                      <article key={card.spot}>
-                        <small>{card.spot}</small>
-                        <strong>{card.title}</strong>
-                        <p>{card.message}</p>
-                      </article>
-                    ))}
-                </div>
-              </div>
-            )}
           </details>
         </section>
       )}

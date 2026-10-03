@@ -36,16 +36,8 @@ const responseSchema = {
         title: { type: Type.STRING },
         target_spot: { type: Type.STRING, enum: spotNames },
         description: { type: Type.STRING },
-        riddle: {
-          type: Type.STRING,
-          description: "運勢やスポットに絡めた、一言で答えられる優しいなぞなぞ(クイズ)。",
-        },
-        riddle_answer: {
-          type: Type.STRING,
-          description: "riddleの想定解答(短い単語または短文)。",
-        },
       },
-      required: ["title", "target_spot", "description", "riddle", "riddle_answer"],
+      required: ["title", "target_spot", "description"],
     },
     lucky_elements: {
       type: Type.OBJECT,
@@ -66,7 +58,7 @@ function isValidOmikujiResult(value: unknown): value is Record<string, unknown> 
   const mission = result.mission as Record<string, unknown> | undefined;
   const lucky = result.lucky_elements as Record<string, unknown> | undefined;
   return isText(result.fortune_name, 200) && isText(result.message, 500) && isText(result.action_tip, 200) && typeof result.compatibility_note === "string"
-    && !!mission && isText(mission.title, 200) && isText(mission.target_spot, 200) && spotNames.includes(mission.target_spot) && isText(mission.description, 500) && isText(mission.riddle, 300) && isText(mission.riddle_answer, 200)
+    && !!mission && isText(mission.title, 200) && isText(mission.target_spot, 200) && spotNames.includes(mission.target_spot) && isText(mission.description, 500)
     && !!lucky && isText(lucky.color, 100) && isText(lucky.food, 100) && isText(lucky.spot, 200);
 }
 
@@ -137,14 +129,14 @@ ${spotContext}
 
 上の企画から来場者の気分・目的・同行者に合う1件を mission.target_spot に選び、その企画で無理なく実行できる楽しいミッションを作成してください。
 存在しない企画、場所、商品、特典、開催時刻を作らないでください。時刻が関係する企画や「後日掲載」の場所は、現地の公式案内を確認するよう促してください。
-アルコールを飲むミッションは作らないでください。mission.riddle には運勢やミッションに関連した簡単ななぞなぞ（一言で答えられるもの）を、mission.riddle_answer にはその想定解答を入れてください。
+アルコールを飲むミッションは作らないでください。
 lucky_elements.spot も上記企画名から選んでください。responseSchema に完全準拠する JSON のみを返してください。`;
 
   try {
     const response = await generateWithAIFallback({
       gemini: ai,
       maxOutputTokens: 700,
-      groqMessages: [{ role: "user", content: `${prompt}\n次のキーを省略せず、JSONだけを返してください。{ "fortune_name":"", "message":"", "action_tip":"", "compatibility_note":"", "mission":{ "title":"", "target_spot":"", "description":"", "riddle":"", "riddle_answer":"" }, "lucky_elements":{ "color":"", "food":"", "spot":"" } }` }],
+      groqMessages: [{ role: "user", content: `${prompt}\n次のキーを省略せず、JSONだけを返してください。{ "fortune_name":"", "message":"", "action_tip":"", "compatibility_note":"", "mission":{ "title":"", "target_spot":"", "description":"" }, "lucky_elements":{ "color":"", "food":"", "spot":"" } }` }],
       json: true,
       geminiRequest: {
       model: "gemini-3.6-flash",

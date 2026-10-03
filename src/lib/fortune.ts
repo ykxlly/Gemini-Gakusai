@@ -11,23 +11,11 @@ export type Result = {
     title: string;
     target_spot: string;
     description: string;
-    riddle: string;
-    riddle_answer: string;
   };
   lucky_elements: { color: string; food: string; spot: string };
 };
 
 export type Choice = { value: string; label: string; note: string };
-export type DiscoveryResult = {
-  stamp_title: string;
-  comment: string;
-  caption: string;
-  rally_complete: boolean;
-  card_title: string;
-  card_message: string;
-  next_spot: string;
-};
-export type MemoryEntry = { image: string; caption: string; spot: string; area: string };
 export type DiscoveryCard = { spot: string; title: string; message: string };
 export type NoveltyKind = "sticker" | "tote";
 export type FestivalSpot = {
@@ -63,15 +51,6 @@ export const companions = ["ひとり", "友達", "恋人", "家族"];
 export const mbtiTypes = [
   "INTJ", "INTP", "ENTJ", "ENTP", "INFJ", "INFP", "ENFJ", "ENFP",
   "ISTJ", "ISFJ", "ESTJ", "ESFJ", "ISTP", "ISFP", "ESTP", "ESFP",
-];
-
-export const photoRallyPrompts = [
-  "赤いものを見つけよう",
-  "手作りだと感じるものを見つけよう",
-  "音が聞こえてきそうな景色を見つけよう",
-  "思わず笑顔になりそうなものを見つけよう",
-  "きらきらしたものを見つけよう",
-  "今日だけの色を見つけよう",
 ];
 
 export const confettiColors = ["#d83a2e", "#f2c84b", "#176b57", "#ffffff"];
@@ -123,33 +102,11 @@ export function createFallbackResult(goal: string, companion: string, previousSp
       title: `${selected.name}へ行ってみよう`,
       target_spot: selected.name,
       description: `${selected.vibe}。会場に着いたら、印象に残ったものを一つ見つけてみよう。`,
-      riddle: "会場で新しく見つけるとうれしいものは？",
-      riddle_answer: "発見",
     },
     lucky_elements: { color: "きらめく黄色", food: "会場で気になった一品", spot: selected.name },
   };
 }
 
-// なぞなぞの表記ゆれ吸収（NFKC・小文字化・空白記号除去）。API呼び出し前のローカル判定用。
-export function normalizeAnswer(value: string): string {
-  return value.normalize("NFKC").toLowerCase().replace(/[\s、。,.!！?？・()（）]/g, "");
-}
-
 export function isValidHex(value: string): boolean {
   return /^#[0-9a-fA-F]{6}$/.test(value.trim());
-}
-
-// /api/omikuji/verify の応答ガード。AI由来の不定形JSONから画面を守る。
-export function isDiscoveryResult(value: unknown): value is DiscoveryResult {
-  if (!value || typeof value !== "object") return false;
-  const r = value as Record<string, unknown>;
-  return (
-    typeof r.stamp_title === "string" &&
-    typeof r.comment === "string" &&
-    typeof r.caption === "string" &&
-    typeof r.rally_complete === "boolean" &&
-    typeof r.card_title === "string" &&
-    typeof r.card_message === "string" &&
-    typeof r.next_spot === "string"
-  );
 }

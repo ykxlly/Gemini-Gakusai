@@ -8,7 +8,7 @@
   { "id": "workshop-keyholder", "name": "キーホルダー作り（提供：ミズノ株式会社様）", "category": "体験・ワークショップ", "location": "エントランス", "vibe": "ミズノの素材を使って世界に一つだけの思い出を形にできる" },
   { "id": "experience-vr", "name": "VR体験", "category": "体験・ワークショップ", "location": "S102", "vibe": "迫力ある仮想現実の世界に入り、新しい体験を楽しめる" },
   { "id": "experience-disaster-prevention", "name": "防災体験（提供：学生団体KUMC）", "category": "体験・ワークショップ", "location": "S204", "vibe": "ホイッスル作りやカードゲームを通じて遊びながら防災を学べる" },
-  { "id": "experience-sdgs-riddle", "name": "未来につながる謎解き体験（提供：関大ボランティアセンター）", "category": "体験・ワークショップ", "location": "S203", "vibe": "ボランティアやSDGsをテーマにした謎解きに家族や友達と挑戦できる" },
+  { "id": "experience-sdgs-nazotoki", "name": "未来につながる謎解き体験（提供：関大ボランティアセンター）", "category": "体験・ワークショップ", "location": "S203", "vibe": "ボランティアやSDGsをテーマにした謎解きに家族や友達と挑戦できる" },
   { "id": "experience-detective", "name": "総プロ探偵（謎解き）（提供：総合プログラミング競技部）", "category": "体験・ワークショップ", "location": "S106", "vibe": "探偵になって問題を解き、証拠を集めて事件解決を目指せる" },
   { "id": "health-walking", "name": "歩行測定（提供：吹田市健康づくり推進事業団）", "category": "体験・ワークショップ", "location": "2階エレベーター前スペース", "vibe": "普段どおり歩くだけで足腰への負荷を知り、無理のない歩き方を学べる" },
   { "id": "health-grip", "name": "握力測定（提供：健都共創推進機構）", "category": "体験・ワークショップ", "location": "2階エレベーター前スペース", "vibe": "握力を測りながら自分の健康や体の状態に楽しく目を向けられる" },

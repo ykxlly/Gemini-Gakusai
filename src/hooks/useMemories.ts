@@ -1,16 +1,16 @@
 // 裏動線「思い出」用フック。主フロー（S0〜S3）からは呼ばない。
-// bookmark / card / narrate / chat / summary + しおりPNG出力。
+// bookmark / card / narrate / chat / summary + しおりPNG出力（テキスト版）。
 // MemoriesSheet の遅延表示時にのみ使うこと。
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { apiPost } from "@/lib/api-client";
 import type { HistoryEntry } from "@/hooks/usePersistentState";
-import type { MemoryEntry, Result } from "@/lib/fortune";
+import type { Result } from "@/lib/fortune";
 
 const MAX_CHAT_TURNS = 30;
 
-export function useMemories(options: { result: Result | null; memories: MemoryEntry[]; history: HistoryEntry[] }) {
+export function useMemories(options: { result: Result | null; history: HistoryEntry[] }) {
   const [bookmark, setBookmark] = useState<{ title: string; closingComment: string } | null>(null);
   const [isCreatingBookmark, setIsCreatingBookmark] = useState(false);
   const [card, setCard] = useState<{ phrase: string; accentHex: string } | null>(null);
@@ -141,8 +141,8 @@ export function useMemories(options: { result: Result | null; memories: MemoryEn
   );
 
   const createBookmark = useCallback(async (notify: (message: string) => void) => {
-    const { result, memories } = live.current;
-    if (!result || memories.length === 0 || busyRef.current.bookmark) return;
+    const { result } = live.current;
+    if (!result || busyRef.current.bookmark) return;
     busyRef.current.bookmark = true;
     setIsCreatingBookmark(true);
     try {
@@ -150,7 +150,12 @@ export function useMemories(options: { result: Result | null; memories: MemoryEn
         "/api/omikuji/bookmark",
         {
           fortuneName: result.fortune_name,
-          memories: memories.map(({ caption, spot, area }) => ({ caption, spot, area })),
+          visits: [
+            {
+              spot: result.mission.target_spot,
+              note: result.action_tip,
+            },
+          ],
         },
         { timeoutMs: 20_000, errorMessage: "しおりを作れませんでした。" },
       );
@@ -174,7 +179,7 @@ export function useMemories(options: { result: Result | null; memories: MemoryEn
   }, []);
 
   const exportBookmark = useCallback(async () => {
-    const { result, memories } = live.current;
+    const { result, history } = live.current;
     if (!bookmark || !result) return;
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
@@ -193,36 +198,30 @@ export function useMemories(options: { result: Result | null; memories: MemoryEn
     context.font = "32px sans-serif";
     context.fillStyle = "#5f5b51";
     context.fillText(`運勢：${result.fortune_name}`, 70, 270);
-    let y = 340;
-    for (const [index, memory] of memories.entries()) {
-      const image = new window.Image();
-      image.src = memory.image;
-      await new Promise<void>((resolve) => {
-        image.onload = () => resolve();
-        image.onerror = () => resolve();
-      });
-      if (image.complete && image.naturalWidth) {
-        const ratio = Math.min(940 / image.naturalWidth, 360 / image.naturalHeight);
-        const width = image.naturalWidth * ratio;
-        const height = image.naturalHeight * ratio;
-        context.drawImage(image, 70, y, width, height);
-        y += height + 26;
-      }
+    context.fillStyle = "#171714";
+    context.font = "700 34px sans-serif";
+    context.fillText(`今日の寄り道：${result.mission.target_spot}`, 70, 350);
+    let y = 440;
+    if (history.length > 0) {
       context.fillStyle = "#176b57";
-      context.font = "700 25px sans-serif";
-      context.fillText(`${index + 1}. ${memory.spot}`, 70, y);
+      context.font = "700 30px sans-serif";
+      context.fillText("今日引いた御神籤", 70, y);
+      y += 60;
       context.fillStyle = "#171714";
-      context.font = "31px sans-serif";
-      context.fillText(memory.caption, 70, y + 47);
-      y += 105;
+      context.font = "30px sans-serif";
+      for (const [index, entry] of history.slice(-5).entries()) {
+        context.fillText(`${index + 1}. ${entry.fortune_name}`, 90, y);
+        y += 52;
+      }
+      y += 20;
     }
     context.fillStyle = "#f2c84b";
-    context.fillRect(55, Math.min(y + 15, 1660), 970, 3);
+    context.fillRect(55, Math.min(y, 1660), 970, 3);
     context.fillStyle = "#5f5b51";
     context.font = "30px sans-serif";
     const words = Array.from(bookmark.closingComment);
     let line = "";
-    let lineY = Math.min(y + 80, 1730);
+    let lineY = Math.min(y + 70, 1730);
     for (const word of words) {
       if (lineY > 1880) break;
       if (context.measureText(line + word).width > 900) {

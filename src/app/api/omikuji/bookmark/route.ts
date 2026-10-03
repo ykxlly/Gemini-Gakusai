@@ -5,8 +5,8 @@ import { getGenAI } from "@/lib/gemini";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { errorResponse, isText, MAX_MEDIUM_TEXT, MAX_SHORT_TEXT } from "@/lib/validation";
 
-type Memory = { caption: string; spot: string; area: string };
-type BookmarkRequest = { fortuneName?: unknown; memories?: unknown };
+type Visit = { spot: string; note: string };
+type BookmarkRequest = { fortuneName?: unknown; visits?: unknown };
 
 const responseSchema = {
   type: Type.OBJECT,
@@ -17,12 +17,11 @@ const responseSchema = {
   required: ["title", "closing_comment"],
 } as const;
 
-function isValidMemories(value: unknown): value is Memory[] {
-  return Array.isArray(value) && value.length > 0 && value.length <= 3 && value.every((memory) =>
-    memory && typeof memory === "object"
-    && isText(memory.caption, MAX_MEDIUM_TEXT)
-    && isText(memory.spot, MAX_SHORT_TEXT)
-    && isText(memory.area, MAX_SHORT_TEXT),
+function isValidVisits(value: unknown): value is Visit[] {
+  return Array.isArray(value) && value.length > 0 && value.length <= 3 && value.every((visit) =>
+    visit && typeof visit === "object"
+    && isText(visit.note, MAX_MEDIUM_TEXT)
+    && isText(visit.spot, MAX_SHORT_TEXT),
   );
 }
 
@@ -40,15 +39,15 @@ export async function POST(request: Request) {
     return errorResponse("Request body must be valid JSON.", 400);
   }
 
-  if (!isText(body.fortuneName, MAX_SHORT_TEXT) || !isValidMemories(body.memories)) {
-    return errorResponse("fortuneName and 1 to 3 valid memories are required.", 400);
+  if (!isText(body.fortuneName, MAX_SHORT_TEXT) || !isValidVisits(body.visits)) {
+    return errorResponse("fortuneName and 1 to 3 valid visits are required.", 400);
   }
 
-  const memoryText = body.memories.map((memory, index) => `${index + 1}. ${memory.spot}（${memory.area}）: ${memory.caption}`).join("\n");
-  const prompt = `学園祭での写真の発見をまとめた「今日の寄り道しおり」を作ります。
+  const visitText = body.visits.map((visit, index) => `${index + 1}. ${visit.spot}: ${visit.note}`).join("\n");
+  const prompt = `学園祭での寄り道の記録をまとめた「今日の寄り道しおり」を作ります。
 運勢: ${body.fortuneName.trim()}
-発見:
-${memoryText}
+今日の足取り:
+${visitText}
 
 titleにはしおりのタイトル、closing_commentには思い出を優しく結ぶ日本語の一言を書いてください。心理診断や断定はしないでください。`;
 

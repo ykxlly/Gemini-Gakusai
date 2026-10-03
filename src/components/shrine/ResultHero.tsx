@@ -22,9 +22,9 @@ function ResultHero({
   isFallbackResult,
   missionSpot,
   missionComplete,
-  rallyComplete,
   isLoading,
   onGoMission,
+  onGoReward,
   onRetrySame,
   onChangeAnswer,
   onShare,
@@ -33,9 +33,9 @@ function ResultHero({
   isFallbackResult: boolean;
   missionSpot: FestivalSpot | undefined;
   missionComplete: boolean;
-  rallyComplete: boolean;
   isLoading: boolean;
   onGoMission: () => void;
+  onGoReward: () => void;
   onRetrySame: () => void;
   onChangeAnswer: () => void;
   onShare: () => void;
@@ -160,8 +160,8 @@ function ResultHero({
       </article>
       <RallyProgress
         missionComplete={missionComplete}
-        rallyComplete={rallyComplete}
-        onAdvance={onGoMission}
+        onGoMission={onGoMission}
+        onGoReward={onGoReward}
       />
       <div className="result-heading">
         <div className="result-paper-kicker">
@@ -171,7 +171,7 @@ function ResultHero({
         <div className="eyebrow">
           <Star size={14} fill="currentColor" /> 今日の御神籤
         </div>
-        <p>三つの印を納めたあなたへ</p>
+        <p>本日の御神籤です</p>
         <h1 aria-label={result.fortune_name} className={`fortune-vertical ${getFortuneNameSize(result.fortune_name)}`}>
           {Array.from(result.fortune_name).map((char, index) => (
             <span aria-hidden="true" className="fortune-char" key={index} style={{ "--i": index } as CSSProperties}>

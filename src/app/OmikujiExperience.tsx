@@ -11,7 +11,6 @@ import RewardPanel from "@/components/shrine/RewardPanel";
 import { ConfettiLayer, SiteFooter, SiteHeader, Toast } from "@/components/shrine/SiteChrome";
 import TopForm from "@/components/shrine/TopForm";
 import { useCelebration } from "@/hooks/useCelebration";
-import { useDiscovery } from "@/hooks/useDiscovery";
 import { useFortune } from "@/hooks/useFortune";
 import { useMemories } from "@/hooks/useMemories";
 import { useNoveltyClaim } from "@/hooks/useNoveltyClaim";
@@ -35,6 +34,7 @@ export default function OmikujiExperience() {
   const [memoriesOpen, setMemoriesOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [previousSpot, setPreviousSpot] = useState<string | undefined>(undefined);
+  const [missionComplete, setMissionComplete] = useState(false);
 
   const fortune = useFortune({ previousSpot, notify: showToast, onDrawStart: handleDrawStart, onDrawn: handleDrawn });
 
@@ -42,14 +42,6 @@ export default function OmikujiExperience() {
     () => getMissionSpot(fortune.result?.mission.target_spot),
     [fortune.result],
   );
-
-  const discovery = useDiscovery({
-    result: fortune.result,
-    missionLocation: missionSpot?.location || "会場",
-    setDiscoveryCards: persist.setDiscoveryCards,
-    notify: showToast,
-    onStampAcquired: handleStampAcquired,
-  });
 
   const claim = useNoveltyClaim({
     visitorId: persist.visitorId,
@@ -62,13 +54,11 @@ export default function OmikujiExperience() {
 
   const memoriesStore = useMemories({
     result: fortune.result,
-    memories: discovery.memories,
     history: persist.history,
   });
 
   // 巻き上げ関数宣言: 描画開始・完了時の横断リセット。呼び出し時点では全フック初期化済み。
   function handleDrawStart() {
-    discovery.resetDiscovery();
     memoriesStore.resetMemories();
   }
 
@@ -76,14 +66,10 @@ export default function OmikujiExperience() {
     void isFallback;
     persist.appendHistory({ fortune_name: result.fortune_name, message: result.message });
     setPreviousSpot(result.mission.target_spot);
-    discovery.resetDiscovery();
+    setMissionComplete(false);
     memoriesStore.resetMemories();
     setPhase("result");
     fireConfetti(result.fortune_name.includes("大吉") ? 36 : 16);
-  }
-
-  function handleStampAcquired() {
-    fireConfetti(28);
   }
 
   const goReward = useCallback(() => {
@@ -96,25 +82,23 @@ export default function OmikujiExperience() {
     scrollTop();
   }, []);
 
-  // 印3/3なら交換所へ、未完ならミッションへ（旧実装では常にdiscovery遷移だった不具合を修正）。
-  const rallyAdvance = useCallback(() => {
-    if (discovery.missionComplete && discovery.discoveryResult?.rally_complete) {
-      setPhase("reward");
-    } else {
-      setPhase("mission");
-    }
+  const goMission = useCallback(() => {
+    setPhase("mission");
     scrollTop();
-  }, [discovery.missionComplete, discovery.discoveryResult]);
+  }, []);
+
+  // 現地ミッション: 自己申告の「行きました！」。押したら紙吹雪 → 完了画面へ。
+  const handleArrived = useCallback(() => {
+    setMissionComplete(true);
+    fireConfetti(36);
+    setPhase("reward");
+    scrollTop();
+  }, [fireConfetti]);
 
   const backFromReward = useCallback(() => {
     setPhase(fortune.result ? "result" : "top");
     scrollTop();
   }, [fortune.result]);
-
-  const toggleMission = useCallback(() => {
-    if (!discovery.missionComplete) fireConfetti(28);
-    discovery.celebrateMission();
-  }, [discovery, fireConfetti]);
 
   const resetToTop = useCallback(() => {
     setIsResetting(true);
@@ -122,7 +106,7 @@ export default function OmikujiExperience() {
     window.setTimeout(
       () => {
         fortune.resetFortune();
-        discovery.resetDiscovery();
+        setMissionComplete(false);
         memoriesStore.resetMemories();
         setPhase("top");
         setIsResetting(false);
@@ -130,7 +114,7 @@ export default function OmikujiExperience() {
       },
       reduceMotion ? 0 : 260,
     );
-  }, [fortune, discovery, memoriesStore]);
+  }, [fortune, memoriesStore]);
 
   const retrySame = useCallback(() => {
     fortune.requestFortune();
@@ -142,9 +126,6 @@ export default function OmikujiExperience() {
 
   const openMemories = useCallback(() => setMemoriesOpen(true), []);
   const closeMemories = useCallback(() => setMemoriesOpen(false), []);
-
-  const missionComplete = discovery.missionComplete;
-  const rallyComplete = Boolean(discovery.discoveryResult?.rally_complete);
 
   // ?booth=novelty では交換所（S3）を先頭に表示する。
   useEffect(() => {
@@ -222,9 +203,9 @@ export default function OmikujiExperience() {
               isFallbackResult={fortune.isFallbackResult}
               missionSpot={missionSpot}
               missionComplete={missionComplete}
-              rallyComplete={rallyComplete}
               isLoading={fortune.isLoading}
-              onGoMission={rallyAdvance}
+              onGoMission={goMission}
+              onGoReward={goReward}
               onRetrySame={retrySame}
               onChangeAnswer={resetToTop}
               onShare={handleShare}
@@ -233,22 +214,9 @@ export default function OmikujiExperience() {
           {phase === "mission" && (
             <MissionPanel
               result={fortune.result}
-              missionComplete={missionComplete}
-              onToggleMission={toggleMission}
-              riddleAnswer={discovery.riddleAnswer}
-              setRiddleAnswer={discovery.setRiddleAnswer}
-              riddleResult={discovery.riddleResult}
-              isCheckingRiddle={discovery.isCheckingRiddle}
-              onCheckRiddle={discovery.checkRiddle}
-              photoRallyPrompt={discovery.photoRallyPrompt}
-              photoPreview={discovery.photoPreview}
-              onPhotoSelect={discovery.handlePhotoSelect}
-              isVerifying={discovery.isVerifying}
-              discoveryResult={discovery.discoveryResult}
-              rallyComplete={rallyComplete}
-              onCreateStamp={discovery.createDiscoveryStamp}
+              missionSpot={missionSpot}
+              onArrived={handleArrived}
               onBackToResult={goResult}
-              onComplete={goReward}
             />
           )}
         </section>
@@ -272,10 +240,8 @@ export default function OmikujiExperience() {
 
       <MemoriesSheet
         open={memoriesOpen}
-        fabHidden={fortune.isLoading}
+        fabHidden={!fortune.result || fortune.isLoading}
         result={fortune.result}
-        memories={discovery.memories}
-        discoveryCards={persist.discoveryCards}
         history={persist.history}
         store={memoriesStore}
         notify={showToast}
