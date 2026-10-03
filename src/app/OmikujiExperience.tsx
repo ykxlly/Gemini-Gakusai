@@ -86,30 +86,6 @@ export default function OmikujiExperience() {
   const openMemories = useCallback(() => setMemoriesOpen(true), []);
   const closeMemories = useCallback(() => setMemoriesOpen(false), []);
 
-  // マウスパララックス（pointer:fine のみ）。
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia("(pointer: fine)").matches) return;
-    const root = document.documentElement;
-    let frame = 0;
-    function handleMove(event: MouseEvent) {
-      if (frame) return;
-      frame = window.requestAnimationFrame(() => {
-        const relX = event.clientX / window.innerWidth - 0.5;
-        const relY = event.clientY / window.innerHeight - 0.5;
-        root.style.setProperty("--mx", (relX * 10).toFixed(2));
-        root.style.setProperty("--my", (relY * 10).toFixed(2));
-        root.style.setProperty("--ex", (relX * 7).toFixed(2));
-        root.style.setProperty("--ey", (relY * 7).toFixed(2));
-        frame = 0;
-      });
-    }
-    window.addEventListener("mousemove", handleMove);
-    return () => {
-      window.removeEventListener("mousemove", handleMove);
-      if (frame) window.cancelAnimationFrame(frame);
-    };
-  }, []);
-
   useEffect(() => {
     if (!fortune.result) clearConfetti();
   }, [fortune.result, clearConfetti]);

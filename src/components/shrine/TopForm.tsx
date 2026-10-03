@@ -5,7 +5,7 @@
 import { ArrowLeft, ArrowRight, Bell, Check, RefreshCw, Star } from "lucide-react";
 import type { FormEvent } from "react";
 import { memo } from "react";
-import ShrineDiorama from "@/components/shrine/ShrineDiorama";
+import Moffy, { type MoffyMotion } from "@/components/shrine/Moffy";
 import { copy } from "@/lib/copy";
 import { companions, goals, mbtiTypes, moods, type Choice } from "@/lib/fortune";
 
@@ -108,12 +108,6 @@ function TopForm(props: TopFormProps) {
           授かろう
         </h1>
         <p>{copy.top.lead}</p>
-        <ShrineDiorama
-          isSuzuPulling={isSuzuPulling}
-          selectionCount={selectionCount}
-          selectionReaction={selectionReaction}
-          mascotMessage={mascotMessage}
-        />
         <div className="privacy-note">
           <Check size={16} /> {copy.top.privacyNote}
         </div>
@@ -140,6 +134,13 @@ function TopForm(props: TopFormProps) {
       </section>
 
       <section className="form-panel" aria-labelledby="form-title">
+        <Moffy
+          message={mascotMessage}
+          motion={(selectionReaction?.motion as MoffyMotion | undefined) ?? "idle"}
+          motionKey={selectionReaction?.key ?? "idle"}
+          progress={selectionCount}
+          size="mini"
+        />
         <div className="form-kicker">
           <span>{copy.site.boothLabel}</span>
           <strong>まずは一枚、授かろう</strong>

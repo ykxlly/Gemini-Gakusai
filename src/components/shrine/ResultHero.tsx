@@ -7,6 +7,7 @@ import { ArrowLeft, MapPin, RefreshCw, Share2, Star } from "lucide-react";
 import Image from "next/image";
 import type { CSSProperties } from "react";
 import { memo, useState } from "react";
+import Moffy, { type MoffyMotion } from "@/components/shrine/Moffy";
 import { copy } from "@/lib/copy";
 import { getSpotByName, type Result } from "@/lib/fortune";
 
@@ -52,6 +53,14 @@ function splitFortuneName(name: string): { service: string; tier: string; isLong
     Array.from(text).reduce((width, char) => width + (char.charCodeAt(0) > 0x2e80 ? 1 : 0.6), 0) * 44;
   const isLong = estimatedWidth(service) + estimatedWidth(tier) > 280;
   return { service, tier, isLong };
+}
+
+// 運勢の段位でMoffyのリアクションを変える。
+function moffyMotionFor(tier: string): MoffyMotion {
+  if (tier === "超大吉") return "cry";
+  if (tier === "大吉") return "jump";
+  if (tier === "末吉") return "nod";
+  return "sway";
 }
 
 function FortuneName({ name }: { name: string }) {
@@ -121,7 +130,16 @@ function ResultHero({
         </div>
       </article>
       <p className="fortune-line">{result.fortune_line}</p>
-      <blockquote className="washi-slip">{result.message}</blockquote>
+      <Moffy
+        message={
+          result.fortune_tier === "末吉"
+            ? `${copy.moffy.nodLead}${result.message}`
+            : result.message
+        }
+        motion={moffyMotionFor(result.fortune_tier)}
+        motionKey={result.fortune_name}
+        size="result"
+      />
 
       {/* 2. おすすめの場所（ここが主役） */}
       <article className="destination-hero omikuji-reveal-card">

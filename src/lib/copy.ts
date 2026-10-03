@@ -20,7 +20,7 @@ export const copy = {
     drawProgressLabel: "今日の選択",
     drawReady: "準備が整いました。今日の運勢を引いてみよう！",
     drawRemaining: (rest: number) => `あと${rest}つ選ぶと、おみくじを引けます`,
-    mascotIdle: "一緒に運勢を探そう",
+    mascotIdle: "今日の寄り道、一緒に探そう！",
     mascotRemaining: (rest: number) => `あと${rest}つ教えてね`,
     mascotReady: "準備OK！運勢を引こう",
     submit: "鈴緒を引いて授かる",
@@ -63,5 +63,21 @@ export const copy = {
   },
   memories: {
     open: "思い出を開く",
+  },
+  moffy: {
+    tapLabel: "モッフィーに話しかける",
+    nodLead: "うんうん、ちゃんと届いてるよ！",
+    tapLines: [
+      "僕モッフィー！今日もよろしくね！",
+      "Gemini的には、君の直感はだいたい正解！",
+      "迷ったら、とりあえず食べ物へGO！",
+      "学園祭って、ちょっと魔法の匂いがするよね",
+      "検索しても出てこない発見、今日あるかも",
+      "タップしてくれてありがとう！元気チャージ！",
+      "友達と来たの？それって最強の組み合わせだね",
+      "今日の思い出は、容量を気にせず詰め込もう",
+      "おすすめの場所まで、僕が案内するよ！",
+      "いいおみくじ引けるといいね。応援してる！",
+    ],
   },
 } as const;
