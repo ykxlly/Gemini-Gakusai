@@ -10,11 +10,45 @@ import { memo, useState } from "react";
 import { copy } from "@/lib/copy";
 import { getSpotByName, type Result } from "@/lib/fortune";
 
-function getFortuneNameSize(name: string) {
-  const length = Array.from(name.replace(/\s/g, "")).length;
-  if (length >= 14) return "fortune-name-compact";
-  if (length >= 10) return "fortune-name-medium";
-  return "fortune-name-short";
+// 運勢名を「サービス名」と「吉の部分」に分ける。横書きで1行に収まらない長い名前は2行にする。
+const FORTUNE_TIER_SUFFIXES = ["超大吉", "大吉", "中吉", "小吉", "末吉"] as const;
+
+function splitFortuneName(name: string): { service: string; tier: string; isLong: boolean } {
+  const tier = FORTUNE_TIER_SUFFIXES.find((suffix) => name.endsWith(suffix)) ?? "";
+  const service = tier ? name.slice(0, name.length - tier.length).trimEnd() : name;
+  const estimatedWidth = (text: string) =>
+    Array.from(text).reduce((width, char) => width + (char.charCodeAt(0) > 0x2e80 ? 1 : 0.62), 0) * 44;
+  const isLong = estimatedWidth(service) + estimatedWidth(tier) > 280;
+  return { service, tier, isLong };
+}
+
+function FortuneName({ name }: { name: string }) {
+  const { service, tier, isLong } = splitFortuneName(name);
+  return (
+    <h1 aria-label={name} className={`fortune-name ${isLong ? "fortune-name-long" : ""}`}>
+      <span className="fortune-service">
+        {Array.from(service || name).map((char, index) => (
+          <span aria-hidden="true" className="fortune-char" key={index} style={{ "--i": index } as CSSProperties}>
+            {char === " " ? "\u00A0" : char}
+          </span>
+        ))}
+      </span>
+      {tier && (
+        <span className="fortune-tier">
+          {Array.from(tier).map((char, index) => (
+            <span
+              aria-hidden="true"
+              className="fortune-char"
+              key={index}
+              style={{ "--i": index + Array.from(service || name).length } as CSSProperties}
+            >
+              {char}
+            </span>
+          ))}
+        </span>
+      )}
+    </h1>
+  );
 }
 
 function ResultHero({
@@ -61,13 +95,7 @@ function ResultHero({
           <Star size={14} fill="currentColor" /> 今日の御神籤
         </div>
         <p>{copy.result.fortuneLineLabel}</p>
-        <h1 aria-label={result.fortune_name} className={`fortune-vertical ${getFortuneNameSize(result.fortune_name)}`}>
-          {Array.from(result.fortune_name).map((char, index) => (
-            <span aria-hidden="true" className="fortune-char" key={index} style={{ "--i": index } as CSSProperties}>
-              {char === " " ? "\u00A0" : char}
-            </span>
-          ))}
-        </h1>
+        <FortuneName name={result.fortune_name} />
         <div className="result-seal">
           <Star size={18} fill="currentColor" /> 授与済
         </div>
@@ -89,12 +117,14 @@ function ResultHero({
           </div>
         )}
         <h1>{result.recommendation.spot}</h1>
-        <div className="destination-location">
+        <div className="place-band">
+          <small>{copy.result.placeLabel}</small>
           <strong>
-            <MapPin size={17} aria-hidden="true" /> {recommendationSpot?.location || copy.result.placeLabel}
+            <MapPin size={19} aria-hidden="true" /> {recommendationSpot?.location || "会場の案内図を確認"}
           </strong>
-          {recommendationSpot && <span>{recommendationSpot.category}</span>}
         </div>
+        {recommendationSpot && <span className="destination-category">{recommendationSpot.category}</span>}
+        {recommendationSpot && <p className="spot-vibe">{recommendationSpot.vibe}</p>}
         <div className="recommend-reason">
           <small>{copy.result.reasonLabel}</small>
           <p>{result.recommendation.reason}</p>
@@ -147,8 +177,8 @@ function ResultHero({
             return (
               <article className="alternative-item" key={alternative.spot}>
                 <strong>{alternative.spot}</strong>
-                <span>
-                  <MapPin size={13} aria-hidden="true" /> {spot?.location || "会場内"}
+                <span className="alternative-place">
+                  <MapPin size={15} aria-hidden="true" /> {spot?.location || "会場内"}
                 </span>
                 <p>{alternative.reason}</p>
               </article>
